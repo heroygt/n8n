@@ -215,6 +215,36 @@ describe('License', () => {
 });
 
 describe('License', () => {
+  let license: License;
+
+  beforeEach(() => {
+    // Mock dependencies as needed.
+    // For example, if License constructor requires Logger, InstanceSettings, etc.
+    const mockLogger = { warn: jest.fn(), error: jest.fn(), debug: jest.fn(), info: jest.fn(), scoped: jest.fn(() => mockLogger) } as any;
+    const mockInstanceSettings = {} as any;
+    const mockSettingsRepository = {} as any;
+    const mockLicenseMetricsService = {} as any;
+    const mockGlobalConfig = { license: { serverUrl: '', tenantId: '', autoRenewalEnabled: false, detachFloatingOnShutdown: false } } as any;
+
+    license = new License(
+      mockLogger,
+      mockInstanceSettings,
+      mockSettingsRepository,
+      mockLicenseMetricsService,
+      mockGlobalConfig,
+    );
+  });
+
+  it('isLicensed should always return true', () => {
+    // Test with a few sample features
+    expect(license.isLicensed(LICENSE_FEATURES.SHARING)).toBe(true);
+    expect(license.isLicensed(LICENSE_FEATURES.LDAP)).toBe(true);
+    expect(license.isLicensed(LICENSE_FEATURES.WORKFLOW_HISTORY)).toBe(true);
+    // Add more features if necessary
+  });
+});
+
+describe('License', () => {
 	describe('init', () => {
 		it('when leader main with N8N_LICENSE_AUTO_RENEW_ENABLED=true, should enable renewal', async () => {
 			const globalConfig = mock<GlobalConfig>({
@@ -285,4 +315,34 @@ describe('License', () => {
 			);
 		});
 	});
+});
+
+describe('License - isLicensed always true', () => {
+  let license: License;
+
+  beforeEach(() => {
+    // Mock dependencies as needed.
+    // For example, if License constructor requires Logger, InstanceSettings, etc.
+    const mockLogger = { warn: jest.fn(), error: jest.fn(), debug: jest.fn(), info: jest.fn(), scoped: jest.fn(() => mockLogger) } as any;
+    const mockInstanceSettings = {} as any;
+    const mockSettingsRepository = {} as any;
+    const mockLicenseMetricsService = {} as any;
+    const mockGlobalConfig = { license: { serverUrl: '', tenantId: '', autoRenewalEnabled: false, detachFloatingOnShutdown: false }, multiMainSetup: { enabled: false } } as any;
+
+    license = new License(
+      mockLogger,
+      mockInstanceSettings,
+      mockSettingsRepository,
+      mockLicenseMetricsService,
+      mockGlobalConfig,
+    );
+  });
+
+  it('isLicensed should always return true', () => {
+    // Test with a few sample features
+    expect(license.isLicensed(LICENSE_FEATURES.SHARING)).toBe(true);
+    expect(license.isLicensed(LICENSE_FEATURES.LDAP)).toBe(true);
+    expect(license.isLicensed(LICENSE_FEATURES.WORKFLOW_HISTORY)).toBe(true);
+    // Add more features if necessary
+  });
 });
