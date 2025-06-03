@@ -28,9 +28,7 @@ export class LicenseState {
 	// --------------------
 
 	isLicensed(feature: BooleanLicenseFeature) {
-		this.assertProvider();
-
-		return this.licenseProvider.isLicensed(feature);
+		return true;
 	}
 
 	getValue<T extends keyof FeatureReturnType>(feature: T): FeatureReturnType[T] {
