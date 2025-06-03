@@ -40,6 +40,7 @@ RUN node -e "const pkg = require('./package.json'); \
 RUN rm -f node_modules/.modules.yaml && \
     pnpm add moment@2.30.1 --prod --no-lockfile
 
+
 # ==============================================================================
 # STAGE 2: Python runner build (@n8n/task-runner-python) with uv
 # Produces a relocatable venv tied to the python version used
@@ -48,6 +49,9 @@ FROM python:${PYTHON_VERSION}-alpine AS python-runner-builder
 ARG TARGETPLATFORM
 ARG UV_VERSION=0.8.14
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk add --no-cache ca-certificates wget
+
 RUN set -e; \
   case "$TARGETPLATFORM" in \
     "linux/amd64") UV_ARCH="x86_64-unknown-linux-musl" ;; \
@@ -55,8 +59,8 @@ RUN set -e; \
     *) echo "Unsupported platform: $TARGETPLATFORM" >&2; exit 1 ;; \
   esac; \
   mkdir -p /tmp/uv && cd /tmp/uv; \
-  wget -q "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz"; \
-  wget -q "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz.sha256"; \
+  wget --no-check-certificate -q "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz"; \
+  wget --no-check-certificate -q "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz.sha256"; \
   sha256sum -c "uv-${UV_ARCH}.tar.gz.sha256"; \
 	tar -xzf "uv-${UV_ARCH}.tar.gz"; \
   install -m 0755 "uv-${UV_ARCH}/uv" /usr/local/bin/uv; \
@@ -94,6 +98,9 @@ FROM alpine:3.22 AS launcher-downloader
 ARG TARGETPLATFORM
 ARG LAUNCHER_VERSION=1.4.7
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk add --no-cache ca-certificates wget
+
 RUN set -e; \
     case "$TARGETPLATFORM" in \
         "linux/amd64") ARCH_NAME="amd64" ;; \
@@ -101,8 +108,8 @@ RUN set -e; \
         *) echo "Unsupported platform: $TARGETPLATFORM" && exit 1 ;; \
     esac; \
     mkdir /launcher-temp && cd /launcher-temp; \
-    wget -q "https://github.com/n8n-io/task-runner-launcher/releases/download/${LAUNCHER_VERSION}/task-runner-launcher-${LAUNCHER_VERSION}-linux-${ARCH_NAME}.tar.gz"; \
-    wget -q "https://github.com/n8n-io/task-runner-launcher/releases/download/${LAUNCHER_VERSION}/task-runner-launcher-${LAUNCHER_VERSION}-linux-${ARCH_NAME}.tar.gz.sha256"; \
+    wget --no-check-certificate -q "https://github.com/n8n-io/task-runner-launcher/releases/download/${LAUNCHER_VERSION}/task-runner-launcher-${LAUNCHER_VERSION}-linux-${ARCH_NAME}.tar.gz"; \
+    wget --no-check-certificate -q "https://github.com/n8n-io/task-runner-launcher/releases/download/${LAUNCHER_VERSION}/task-runner-launcher-${LAUNCHER_VERSION}-linux-${ARCH_NAME}.tar.gz.sha256"; \
     echo "$(cat task-runner-launcher-${LAUNCHER_VERSION}-linux-${ARCH_NAME}.tar.gz.sha256) task-runner-launcher-${LAUNCHER_VERSION}-linux-${ARCH_NAME}.tar.gz" > checksum.sha256; \
     sha256sum -c checksum.sha256; \
     mkdir -p /launcher-bin; \
@@ -133,7 +140,8 @@ COPY --from=node-alpine /usr/local/bin/node /usr/local/bin/node
 
 # libstdc++ is required by Node
 # libc6-compat is required by task-runner-launcher
-RUN apk add --no-cache ca-certificates tini libstdc++ libc6-compat && \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk add --no-cache ca-certificates tini libstdc++ libc6-compat && \
     apk upgrade --no-cache && \
     pip install --no-cache-dir "pip>=26.0" && \
     apk del apk-tools

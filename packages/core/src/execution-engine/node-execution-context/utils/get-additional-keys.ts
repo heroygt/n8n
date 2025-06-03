@@ -11,9 +11,14 @@ import { createExecutionCustomData } from './custom-data';
 import { getSecretsProxy } from './get-secrets-proxy';
 
 function appendResumeToken(url: string, token: string): string {
-	const urlObj = new URL(url);
-	urlObj.searchParams.set(WAITING_TOKEN_QUERY_PARAM, token);
-	return urlObj.toString();
+	try {
+		const urlObj = new URL(url);
+		urlObj.searchParams.set(WAITING_TOKEN_QUERY_PARAM, token);
+		return urlObj.toString();
+	} catch {
+		const separator = url.includes('?') ? '&' : '?';
+		return `${url}${separator}${WAITING_TOKEN_QUERY_PARAM}=${encodeURIComponent(token)}`;
+	}
 }
 
 /** Returns the additional keys for Expressions and Function-Nodes */

@@ -7,7 +7,8 @@ ARG N8N_VERSION=snapshot
 # Digest pins to node:24.18.0-alpine3.24 (Node 24.18.0, Alpine 3.24).
 FROM node:24.18.0-alpine3.24@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS builder
 COPY ./compiled /usr/local/lib/node_modules/n8n
-RUN apk add --no-cache python3 make g++ && \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk add --no-cache python3 make g++ && \
     cd /usr/local/lib/node_modules/n8n && \
     npm rebuild sqlite3 && \
     # Rebuild isolated-vm from source. node-gyp-build's musl detection relies
@@ -32,7 +33,7 @@ RUN apk add --no-cache python3 make g++ && \
 FROM n8nio/base:24.18.0@sha256:29d9c11f55f02442276512592b439ebb2a1d1043c1339ad5cea4e56862520d22
 
 ARG N8N_VERSION
-ARG N8N_RELEASE_TYPE=dev
+ARG N8N_RELEASE_TYPE=stable
 ENV NODE_ENV=production
 ENV N8N_RELEASE_TYPE=${N8N_RELEASE_TYPE}
 ENV SHELL=/bin/sh

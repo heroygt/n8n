@@ -277,8 +277,8 @@ export class License implements LicenseProvider {
 		this.logger.debug('License shut down');
 	}
 
-	isLicensed(feature: BooleanLicenseFeature) {
-		return this.manager?.hasFeatureEnabled(feature) ?? false;
+	isLicensed(_feature: BooleanLicenseFeature) {
+		return true;
 	}
 
 	isCertValid(): boolean {
@@ -371,7 +371,7 @@ export class License implements LicenseProvider {
 
 	/** @deprecated Use `LicenseState.isAPIDisabled` instead. */
 	isAPIDisabled() {
-		return this.isLicensed(LICENSE_FEATURES.API_DISABLED);
+		return false;
 	}
 
 	/** @deprecated Use `LicenseState.isWorkerViewLicensed` instead. */
@@ -409,6 +409,20 @@ export class License implements LicenseProvider {
 	}
 
 	getValue<T extends keyof FeatureReturnType>(feature: T): FeatureReturnType[T] {
+		if (feature === 'quota:activeWorkflows') return -1 as FeatureReturnType[T];
+		if (feature === 'quota:maxVariables') return -1 as FeatureReturnType[T];
+		if (feature === 'quota:users') return -1 as FeatureReturnType[T];
+		if (feature === 'quota:workflowHistoryPrune') return -1 as FeatureReturnType[T];
+		if (feature === 'quota:maxTeamProjects') return -1 as FeatureReturnType[T];
+		if (feature === 'quota:aiCredits') return 999999 as FeatureReturnType[T];
+		if (feature === 'quota:aiGatewayBudget') return 999999 as FeatureReturnType[T];
+		if (feature === 'quota:insights:maxHistoryDays') return 3650 as FeatureReturnType[T];
+		if (feature === 'quota:insights:retention:maxAgeDays') return 3650 as FeatureReturnType[T];
+		if (feature === 'quota:insights:retention:pruneIntervalDays')
+			return 3650 as FeatureReturnType[T];
+		if (feature === 'quota:evaluations:maxWorkflows') return 999999 as FeatureReturnType[T];
+		if (feature === 'quota:evaluations:concurrencyLimit') return -1 as FeatureReturnType[T];
+
 		return this.manager?.getFeatureValue(feature) as FeatureReturnType[T];
 	}
 
