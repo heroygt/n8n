@@ -75,6 +75,18 @@ export class Redis implements INodeType {
 						action: 'Return all keys matching a pattern',
 					},
 					{
+						name: 'Mget',
+						value: 'mget',
+						description: 'Get multiple values from Redis',
+						action: 'Get multiple values from Redis',
+					},
+					{
+						name: 'Mset',
+						value: 'mset',
+						description: 'Set multiple key-value pairs in Redis',
+						action: 'Set multiple key-value pairs in Redis',
+					},
+					{
 						name: 'Pop',
 						value: 'pop',
 						description: 'Pop data from a redis list',
@@ -211,6 +223,111 @@ export class Redis implements INodeType {
 							'<p>By default, dot-notation is used in property names. This means that "a.b" will set the property "b" underneath "a" so { "a": { "b": value} }.<p></p>If that is not intended this can be deactivated, it will then set { "a.b": value } instead.</p>.',
 					},
 				],
+			},
+
+			// ----------------------------------
+			//         mget
+			// ----------------------------------
+			{
+				displayName: 'Name',
+				name: 'propertyName',
+				type: 'string',
+				displayOptions: {
+					show: {
+						operation: ['mget'],
+					},
+				},
+				default: 'propertyName',
+				required: true,
+				description:
+					'Name of the property to write the array of values to. Supports dot-notation. Example: "data.person[0].name".',
+			},
+			{
+				displayName: 'Keys',
+				name: 'keys',
+				type: 'string',
+				displayOptions: {
+					show: {
+						operation: ['mget'],
+					},
+				},
+				default: '',
+				required: true,
+				description:
+					'Array of keys to get. Enter as a JSON array of strings, e.g. ["key1", "key2"].',
+			},
+			{
+				displayName: 'Options',
+				name: 'options',
+				type: 'collection',
+				displayOptions: {
+					show: {
+						operation: ['mget'],
+					},
+				},
+				placeholder: 'Add option',
+				default: {},
+				options: [
+					{
+						displayName: 'Dot Notation',
+						name: 'dotNotation',
+						type: 'boolean',
+						default: true,
+						// eslint-disable-next-line n8n-nodes-base/node-param-description-boolean-without-whether
+						description:
+							'<p>By default, dot-notation is used in property names. This means that "a.b" will set the property "b" underneath "a" so { "a": { "b": value} }.<p></p>If that is not intended this can be deactivated, it will then set { "a.b": value } instead.</p>.',
+					},
+				],
+			},
+
+			// ----------------------------------
+			//         mset
+			// ----------------------------------
+			{
+				displayName: 'Key-Value Pairs',
+				name: 'keyValues',
+				type: 'string',
+				typeOptions: {
+					editor: 'json' as const,
+					editorLanguage: 'json',
+				},
+				displayOptions: {
+					show: {
+						operation: ['mset'],
+					},
+				},
+				default: '{\n"key1": "value1",\n"key2": "value2"\n}',
+				required: true,
+				description:
+					'Key-value pairs to set in Redis as a JSON object, e.g. {"key1": "value1", "key2": "value2"}',
+			},
+			{
+				displayName: 'Expire',
+				name: 'expire',
+				type: 'boolean',
+				displayOptions: {
+					show: {
+						operation: ['mset'],
+					},
+				},
+				default: false,
+				description: 'Whether to set a timeout on all keys',
+			},
+			{
+				displayName: 'TTL',
+				name: 'ttl',
+				type: 'number',
+				typeOptions: {
+					minValue: 1,
+				},
+				displayOptions: {
+					show: {
+						operation: ['mset'],
+						expire: [true],
+					},
+				},
+				default: 60,
+				description: 'Number of seconds before key expiration (applies to all keys)',
 			},
 
 			// ----------------------------------
@@ -538,7 +655,9 @@ export class Redis implements INodeType {
 				}
 			}
 		} else if (
-			['delete', 'get', 'keys', 'set', 'incr', 'publish', 'push', 'pop'].includes(operation)
+			['delete', 'get', 'keys', 'set', 'incr', 'publish', 'push', 'pop', 'mget', 'mset'].includes(
+				operation,
+			)
 		) {
 			const items = this.getInputData();
 
@@ -637,6 +756,77 @@ export class Redis implements INodeType {
 							set(item.json, propertyName, outputValue);
 						}
 						returnItems.push(item);
+					} else if (operation === 'mget') {
+						const propertyName = this.getNodeParameter('propertyName', itemIndex) as string;
+						const options = this.getNodeParameter('options', itemIndex, {}) as {
+							dotNotation?: boolean;
+						};
+
+						let keyList: string[];
+						try {
+							keyList = this.getNodeParameter('keys', itemIndex) as string[];
+						} catch (error) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'The keys parameter is not valid JSON. Please provide a JSON array of strings.',
+								{ itemIndex },
+							);
+						}
+
+						const values = keyList.length > 0 ? await client.mGet(keyList) : [];
+
+						if (options.dotNotation === false) {
+							item.json[propertyName] = values;
+						} else {
+							set(item.json, propertyName, values);
+						}
+
+						returnItems.push(item);
+					} else if (operation === 'mset') {
+						const expire = this.getNodeParameter('expire', itemIndex, false) as boolean;
+						const ttl = this.getNodeParameter('ttl', itemIndex, -1) as number;
+
+						let keyValuePairs: Record<string, string>;
+						try {
+							keyValuePairs = this.getNodeParameter('keyValues', itemIndex) as Record<
+								string,
+								string
+							>;
+						} catch (error) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'The key-value pairs parameter is not valid JSON. Please provide a JSON object.',
+								{ itemIndex },
+							);
+						}
+
+						if (
+							typeof keyValuePairs !== 'object' ||
+							keyValuePairs === null ||
+							Array.isArray(keyValuePairs)
+						) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'The key-value pairs must be a JSON object with string keys and string values.',
+								{ itemIndex },
+							);
+						}
+
+						// Convert to array of [key, value] pairs for mSet
+						const keyValueArray = Object.entries(keyValuePairs).flat();
+
+						// Set all key-value pairs atomically
+						await client.mSet(keyValuePairs);
+
+						// Set TTL for all keys if enabled
+						if (expire && ttl > 0) {
+							const keys = Object.keys(keyValuePairs);
+							for (const key of keys) {
+								await client.expire(key, ttl);
+							}
+						}
+
+						returnItems.push(items[itemIndex]);
 					}
 				} catch (error) {
 					if (this.continueOnFail()) {
