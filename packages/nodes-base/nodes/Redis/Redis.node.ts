@@ -707,7 +707,10 @@ export class Redis implements INodeType {
 						const keyPattern = this.getNodeParameter('keyPattern', itemIndex) as string;
 						const getValues = this.getNodeParameter('getValues', itemIndex, true) as boolean;
 
-						const keys = await client.keys(keyPattern);
+						const keys: string[] = [];
+						for await (const key of client.scanIterator({ MATCH: keyPattern })) {
+							keys.push(key);
+						}
 
 						if (!getValues) {
 							returnItems.push({ json: { keys } });
