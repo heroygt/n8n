@@ -128,7 +128,7 @@ export class Redis implements INodeType {
 				},
 				default: '',
 				required: true,
-				description: 'Name of the key to delete from Redis',
+				description: 'Name of the key(s) to delete from Redis',
 			},
 
 			// ----------------------------------
@@ -667,10 +667,24 @@ export class Redis implements INodeType {
 					item = { json: {}, pairedItem: { item: itemIndex } };
 
 					if (operation === 'delete') {
-						const keyDelete = this.getNodeParameter('key', itemIndex) as string;
+						const keysToDelete = [this.getNodeParameter('key', itemIndex)].flat() as string[];
 
-						await client.del(keyDelete);
-						returnItems.push(items[itemIndex]);
+						try {
+							await client.del(keysToDelete);
+							returnItems.push({
+								json: {
+									deletedKeys: keysToDelete,
+									count: keysToDelete.length,
+								},
+								pairedItem: { item: itemIndex },
+							});
+						} catch (error) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Error deleting key(s), please check the key(s) is valid.',
+								{ itemIndex },
+							);
+						}
 					} else if (operation === 'get') {
 						const propertyName = this.getNodeParameter('propertyName', itemIndex) as string;
 						const keyGet = this.getNodeParameter('key', itemIndex) as string;
