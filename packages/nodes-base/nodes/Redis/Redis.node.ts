@@ -670,7 +670,7 @@ export class Redis implements INodeType {
 						const keysToDelete = [this.getNodeParameter('key', itemIndex)].flat() as string[];
 
 						try {
-							if (keysToDelete.length === 0) {
+							if (keysToDelete.length > 0) {
 								await client.del(keysToDelete);
 							}
 							returnItems.push({
