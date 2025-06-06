@@ -1,5 +1,6 @@
 import set from 'lodash/set';
 import type {
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
@@ -8,13 +9,7 @@ import type {
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import type { RedisCredential } from './types';
-import {
-	setupRedisClient,
-	redisConnectionTest,
-	convertInfoToObject,
-	getValue,
-	setValue,
-} from './utils';
+import { setupRedisClient, redisConnectionTest, convertInfoToObject } from './utils';
 
 export class Redis implements INodeType {
 	description: INodeTypeDescription = {
@@ -288,7 +283,7 @@ export class Redis implements INodeType {
 				name: 'keyValues',
 				type: 'string',
 				typeOptions: {
-					editor: 'json' as const,
+					editor: 'codeNodeEditor',
 					editorLanguage: 'json',
 				},
 				displayOptions: {
@@ -661,52 +656,60 @@ export class Redis implements INodeType {
 		) {
 			const items = this.getInputData();
 
-			let item: INodeExecutionData;
+			// 使用pipeline模式批量处理所有items
+			const pipeline = client.multi();
+			const itemOperations: Array<{
+				itemIndex: number;
+				operation: string;
+				item: INodeExecutionData;
+				commandCount: number;
+				hasTypeCommand?: boolean;
+			}> = [];
+
+			// 准备所有的pipeline命令
+			let totalCommands = 0;
 			for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 				try {
-					item = { json: {}, pairedItem: { item: itemIndex } };
+					const itemOperation = {
+						itemIndex,
+						operation,
+						item: { json: {}, pairedItem: { item: itemIndex } },
+						commandCount: 0,
+						hasTypeCommand: false,
+					};
 
 					if (operation === 'delete') {
 						const keysToDelete = [this.getNodeParameter('key', itemIndex)].flat() as string[];
-
-						try {
-							if (keysToDelete.length > 0) {
-								await client.del(keysToDelete);
-							}
-							returnItems.push({
-								json: {
-									deletedKeys: keysToDelete,
-									count: keysToDelete.length,
-								},
-								pairedItem: { item: itemIndex },
-							});
-						} catch (error) {
-							throw new NodeOperationError(
-								this.getNode(),
-								'Error deleting key(s), please check the key(s) is valid.',
-								{ itemIndex },
-							);
+						if (keysToDelete.length > 0) {
+							pipeline.del(keysToDelete);
+							itemOperation.commandCount = 1;
 						}
 					} else if (operation === 'get') {
-						const propertyName = this.getNodeParameter('propertyName', itemIndex) as string;
 						const keyGet = this.getNodeParameter('key', itemIndex) as string;
 						const keyType = this.getNodeParameter('keyType', itemIndex) as string;
 
-						const value = (await getValue(client, keyGet, keyType)) ?? null;
-
-						const options = this.getNodeParameter('options', itemIndex, {});
-
-						if (options.dotNotation === false) {
-							item.json[propertyName] = value;
-						} else {
-							set(item.json, propertyName, value);
+						if (keyType === 'automatic') {
+							pipeline.type(keyGet);
+							itemOperation.hasTypeCommand = true;
+							itemOperation.commandCount++;
 						}
 
-						returnItems.push(item);
+						// 根据类型添加获取值的命令
+						if (keyType === 'string' || keyType === 'automatic') {
+							pipeline.get(keyGet);
+						} else if (keyType === 'hash') {
+							pipeline.hGetAll(keyGet);
+						} else if (keyType === 'list') {
+							pipeline.lRange(keyGet, 0, -1);
+						} else if (keyType === 'sets') {
+							pipeline.sMembers(keyGet);
+						}
+						itemOperation.commandCount++;
 					} else if (operation === 'keys') {
 						const keyPattern = this.getNodeParameter('keyPattern', itemIndex) as string;
 						const getValues = this.getNodeParameter('getValues', itemIndex, true) as boolean;
 
+						// keys操作比较复杂，我们暂时使用传统方式
 						const keys: string[] = [];
 						for await (const key of client.scanIterator({ MATCH: keyPattern, COUNT: 10000 })) {
 							keys.push(key);
@@ -717,10 +720,11 @@ export class Redis implements INodeType {
 							continue;
 						}
 
+						// 为每个key添加getValue命令
 						for (const keyName of keys) {
-							item.json[keyName] = await getValue(client, keyName);
+							pipeline.get(keyName); // 默认先尝试string类型
+							itemOperation.commandCount++;
 						}
-						returnItems.push(item);
 					} else if (operation === 'set') {
 						const keySet = this.getNodeParameter('key', itemIndex) as string;
 						const value = this.getNodeParameter('value', itemIndex) as string;
@@ -729,58 +733,104 @@ export class Redis implements INodeType {
 						const expire = this.getNodeParameter('expire', itemIndex, false) as boolean;
 						const ttl = this.getNodeParameter('ttl', itemIndex, -1) as number;
 
-						await setValue.call(this, client, keySet, value, expire, ttl, keyType, valueIsJSON);
-						returnItems.push(items[itemIndex]);
+						// 添加setValue命令到pipeline
+						let actualType = keyType;
+						if (actualType === 'automatic') {
+							if (typeof value === 'string') {
+								actualType = 'string';
+							} else if (Array.isArray(value)) {
+								actualType = 'list';
+							} else if (typeof value === 'object') {
+								actualType = 'hash';
+							}
+						}
+
+						if (actualType === 'string') {
+							pipeline.set(keySet, value.toString());
+							itemOperation.commandCount++;
+						} else if (actualType === 'hash') {
+							if (valueIsJSON) {
+								let values: unknown;
+								try {
+									values = typeof value === 'string' ? JSON.parse(value) : value;
+								} catch {
+									values = value;
+								}
+								for (const key of Object.keys(values as object)) {
+									pipeline.hSet(keySet, key, (values as IDataObject)[key]!.toString());
+									itemOperation.commandCount++;
+								}
+							} else {
+								const values = value.toString().split(' ');
+								pipeline.hSet(keySet, values);
+								itemOperation.commandCount++;
+							}
+						} else if (actualType === 'list') {
+							pipeline.del(keySet);
+							itemOperation.commandCount++;
+							const valueArray = Array.isArray(value) ? value : [value];
+							for (const item of valueArray) {
+								pipeline.rPush(keySet, item.toString());
+								itemOperation.commandCount++;
+							}
+						} else if (actualType === 'sets') {
+							pipeline.del(keySet);
+							itemOperation.commandCount++;
+							if (Array.isArray(value)) {
+								for (const item of value) {
+									pipeline.sAdd(keySet, item.toString());
+									itemOperation.commandCount++;
+								}
+							} else {
+								pipeline.sAdd(keySet, value.toString());
+								itemOperation.commandCount++;
+							}
+						}
+
+						if (expire && ttl > 0) {
+							pipeline.expire(keySet, ttl);
+							itemOperation.commandCount++;
+						}
 					} else if (operation === 'incr') {
 						const keyIncr = this.getNodeParameter('key', itemIndex) as string;
 						const expire = this.getNodeParameter('expire', itemIndex, false) as boolean;
 						const ttl = this.getNodeParameter('ttl', itemIndex, -1) as number;
-						const incrementVal = await client.incr(keyIncr);
+
+						pipeline.incr(keyIncr);
+						itemOperation.commandCount++;
+
 						if (expire && ttl > 0) {
-							await client.expire(keyIncr, ttl);
+							pipeline.expire(keyIncr, ttl);
+							itemOperation.commandCount++;
 						}
-						returnItems.push({ json: { [keyIncr]: incrementVal } });
 					} else if (operation === 'publish') {
 						const channel = this.getNodeParameter('channel', itemIndex) as string;
 						const messageData = this.getNodeParameter('messageData', itemIndex) as string;
-						await client.publish(channel, messageData);
-						returnItems.push(items[itemIndex]);
+
+						pipeline.publish(channel, messageData);
+						itemOperation.commandCount++;
 					} else if (operation === 'push') {
 						const redisList = this.getNodeParameter('list', itemIndex) as string;
 						const messageData = this.getNodeParameter('messageData', itemIndex) as string;
 						const tail = this.getNodeParameter('tail', itemIndex, false) as boolean;
-						await client[tail ? 'rPush' : 'lPush'](redisList, messageData);
-						returnItems.push(items[itemIndex]);
+
+						if (tail) {
+							pipeline.rPush(redisList, messageData);
+						} else {
+							pipeline.lPush(redisList, messageData);
+						}
+						itemOperation.commandCount++;
 					} else if (operation === 'pop') {
 						const redisList = this.getNodeParameter('list', itemIndex) as string;
 						const tail = this.getNodeParameter('tail', itemIndex, false) as boolean;
-						const propertyName = this.getNodeParameter(
-							'propertyName',
-							itemIndex,
-							'propertyName',
-						) as string;
 
-						const value = await client[tail ? 'rPop' : 'lPop'](redisList);
-
-						let outputValue;
-						try {
-							outputValue = value && JSON.parse(value);
-						} catch {
-							outputValue = value;
-						}
-						const options = this.getNodeParameter('options', itemIndex, {});
-						if (options.dotNotation === false) {
-							item.json[propertyName] = outputValue;
+						if (tail) {
+							pipeline.rPop(redisList);
 						} else {
-							set(item.json, propertyName, outputValue);
+							pipeline.lPop(redisList);
 						}
-						returnItems.push(item);
+						itemOperation.commandCount++;
 					} else if (operation === 'mget') {
-						const propertyName = this.getNodeParameter('propertyName', itemIndex) as string;
-						const options = this.getNodeParameter('options', itemIndex, {}) as {
-							dotNotation?: boolean;
-						};
-
 						let keyList: string[];
 						try {
 							keyList = this.getNodeParameter('keys', itemIndex) as string[];
@@ -792,15 +842,10 @@ export class Redis implements INodeType {
 							);
 						}
 
-						const values = keyList.length > 0 ? await client.mGet(keyList) : [];
-
-						if (options.dotNotation === false) {
-							item.json[propertyName] = values;
-						} else {
-							set(item.json, propertyName, values);
+						if (keyList.length > 0) {
+							pipeline.mGet(keyList);
+							itemOperation.commandCount++;
 						}
-
-						returnItems.push(item);
 					} else if (operation === 'mset') {
 						const expire = this.getNodeParameter('expire', itemIndex, false) as boolean;
 						const ttl = this.getNodeParameter('ttl', itemIndex, -1) as number;
@@ -831,22 +876,20 @@ export class Redis implements INodeType {
 							);
 						}
 
-						// Convert to array of [key, value] pairs for mSet
-						const keyValueArray = Object.entries(keyValuePairs).flat();
+						pipeline.mSet(keyValuePairs);
+						itemOperation.commandCount++;
 
-						// Set all key-value pairs atomically
-						await client.mSet(keyValuePairs);
-
-						// Set TTL for all keys if enabled
 						if (expire && ttl > 0) {
 							const keys = Object.keys(keyValuePairs);
 							for (const key of keys) {
-								await client.expire(key, ttl);
+								pipeline.expire(key, ttl);
+								itemOperation.commandCount++;
 							}
 						}
-
-						returnItems.push(items[itemIndex]);
 					}
+
+					itemOperations.push(itemOperation);
+					totalCommands += itemOperation.commandCount;
 				} catch (error) {
 					if (this.continueOnFail()) {
 						returnItems.push({
@@ -861,6 +904,144 @@ export class Redis implements INodeType {
 					}
 					await client.quit();
 					throw new NodeOperationError(this.getNode(), error, { itemIndex });
+				}
+			}
+
+			// 执行pipeline
+			try {
+				const results = await pipeline.exec();
+
+				// 处理结果
+				let resultIndex = 0;
+				for (const itemOp of itemOperations) {
+					try {
+						const item = itemOp.item;
+
+						if (itemOp.operation === 'delete') {
+							const keysToDelete = [
+								this.getNodeParameter('key', itemOp.itemIndex),
+							].flat() as string[];
+							returnItems.push({
+								json: {
+									deletedKeys: keysToDelete,
+									count: keysToDelete.length,
+								},
+								pairedItem: { item: itemOp.itemIndex },
+							});
+							resultIndex += itemOp.commandCount;
+						} else if (itemOp.operation === 'get') {
+							const propertyName = this.getNodeParameter(
+								'propertyName',
+								itemOp.itemIndex,
+							) as string;
+							const keyType = this.getNodeParameter('keyType', itemOp.itemIndex) as string;
+							const options = this.getNodeParameter('options', itemOp.itemIndex, {});
+
+							let actualType = keyType;
+							if (itemOp.hasTypeCommand) {
+								actualType = (results[resultIndex] as string) || 'string';
+								resultIndex++;
+							}
+
+							const value = results[resultIndex] ?? null;
+							resultIndex++;
+
+							if (options.dotNotation === false) {
+								item.json[propertyName] = value;
+							} else {
+								set(item.json, propertyName, value);
+							}
+
+							returnItems.push(item);
+						} else if (itemOp.operation === 'keys') {
+							// keys操作已经在上面处理过了，这里跳过
+							resultIndex += itemOp.commandCount;
+						} else if (itemOp.operation === 'set') {
+							returnItems.push(items[itemOp.itemIndex]);
+							resultIndex += itemOp.commandCount;
+						} else if (itemOp.operation === 'incr') {
+							const keyIncr = this.getNodeParameter('key', itemOp.itemIndex) as string;
+							const incrementVal = results[resultIndex];
+							resultIndex += itemOp.commandCount;
+
+							returnItems.push({ json: { [keyIncr]: incrementVal } });
+						} else if (itemOp.operation === 'publish') {
+							returnItems.push(items[itemOp.itemIndex]);
+							resultIndex += itemOp.commandCount;
+						} else if (itemOp.operation === 'push') {
+							returnItems.push(items[itemOp.itemIndex]);
+							resultIndex += itemOp.commandCount;
+						} else if (itemOp.operation === 'pop') {
+							const propertyName = this.getNodeParameter(
+								'propertyName',
+								itemOp.itemIndex,
+								'propertyName',
+							) as string;
+							const value = results[resultIndex];
+							resultIndex++;
+
+							let outputValue;
+							try {
+								outputValue = value && JSON.parse(value as string);
+							} catch {
+								outputValue = value;
+							}
+
+							const options = this.getNodeParameter('options', itemOp.itemIndex, {});
+							if (options.dotNotation === false) {
+								item.json[propertyName] = outputValue;
+							} else {
+								set(item.json, propertyName, outputValue);
+							}
+							returnItems.push(item);
+						} else if (itemOp.operation === 'mget') {
+							const propertyName = this.getNodeParameter(
+								'propertyName',
+								itemOp.itemIndex,
+							) as string;
+							const options = this.getNodeParameter('options', itemOp.itemIndex, {}) as {
+								dotNotation?: boolean;
+							};
+							const values = results[resultIndex] || [];
+							resultIndex++;
+
+							if (options.dotNotation === false) {
+								item.json[propertyName] = values;
+							} else {
+								set(item.json, propertyName, values);
+							}
+
+							returnItems.push(item);
+						} else if (itemOp.operation === 'mset') {
+							returnItems.push(items[itemOp.itemIndex]);
+							resultIndex += itemOp.commandCount;
+						}
+					} catch (error) {
+						if (this.continueOnFail()) {
+							returnItems.push({
+								json: {
+									error: error.message,
+								},
+								pairedItem: {
+									item: itemOp.itemIndex,
+								},
+							});
+							continue;
+						}
+						await client.quit();
+						throw new NodeOperationError(this.getNode(), error, { itemIndex: itemOp.itemIndex });
+					}
+				}
+			} catch (error) {
+				if (this.continueOnFail()) {
+					returnItems.push({
+						json: {
+							error: error.message,
+						},
+					});
+				} else {
+					await client.quit();
+					throw new NodeOperationError(this.getNode(), error);
 				}
 			}
 		}
