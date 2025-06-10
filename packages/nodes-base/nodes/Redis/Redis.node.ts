@@ -757,24 +757,24 @@ export class Redis implements INodeType {
 						const keys = keysOperationResults.get(itemIndex) || [];
 
 						if (!getValues) {
-							returnItems.push({ json: { keys } });
-							continue;
-						}
+							// 不需要获取值，但仍需要将操作添加到itemOperations中进行结果处理
+							itemOperation.commandCount = 0; // 没有pipeline命令
+						} else {
+							// 根据实际类型为每个key添加获取值命令
+							for (const keyName of keys) {
+								const actualType = keyTypes.get(keyName) || 'string';
 
-						// 根据实际类型为每个key添加获取值命令
-						for (const keyName of keys) {
-							const actualType = keyTypes.get(keyName) || 'string';
-
-							if (actualType === 'string') {
-								pipeline.get(keyName);
-							} else if (actualType === 'hash') {
-								pipeline.hGetAll(keyName);
-							} else if (actualType === 'list') {
-								pipeline.lRange(keyName, 0, -1);
-							} else if (actualType === 'set') {
-								pipeline.sMembers(keyName);
+								if (actualType === 'string') {
+									pipeline.get(keyName);
+								} else if (actualType === 'hash') {
+									pipeline.hGetAll(keyName);
+								} else if (actualType === 'list') {
+									pipeline.lRange(keyName, 0, -1);
+								} else if (actualType === 'set') {
+									pipeline.sMembers(keyName);
+								}
+								itemOperation.commandCount++;
 							}
-							itemOperation.commandCount++;
 						}
 					} else if (operation === 'set') {
 						const keySet = this.getNodeParameter('key', itemIndex) as string;
@@ -1006,8 +1006,11 @@ export class Redis implements INodeType {
 							const keys = keysOperationResults.get(itemOp.itemIndex) || [];
 
 							if (!getValues) {
-								// 如果不需要获取值，直接返回key列表（已经在前面处理过了）
-								// 这里什么都不需要做，因为结果已经在前面添加了
+								// 不需要获取值，直接返回key列表
+								returnItems.push({
+									json: { keys },
+									pairedItem: { item: itemOp.itemIndex },
+								});
 							} else {
 								// 构建key-value映射
 								const keyValueMap: Record<string, unknown> = {};
@@ -1021,6 +1024,7 @@ export class Redis implements INodeType {
 										keys,
 										values: keyValueMap,
 									},
+									pairedItem: { item: itemOp.itemIndex },
 								});
 							}
 						} else if (itemOp.operation === 'set') {
