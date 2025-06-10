@@ -656,18 +656,65 @@ export class Redis implements INodeType {
 		) {
 			const items = this.getInputData();
 
-			// 使用pipeline模式批量处理所有items
+			// 第一步：收集所有需要查询类型的key
+			const keysNeedingTypeQuery: Array<{
+				itemIndex: number;
+				key: string;
+				source: 'get' | 'keys';
+			}> = [];
+
+			// 存储keys操作匹配到的key列表
+			const keysOperationResults: Map<number, string[]> = new Map();
+
+			// 先遍历一遍，收集需要查询类型的key
+			for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+				if (operation === 'get') {
+					const keyGet = this.getNodeParameter('key', itemIndex) as string;
+					const keyType = this.getNodeParameter('keyType', itemIndex) as string;
+
+					if (keyType === 'automatic') {
+						keysNeedingTypeQuery.push({ itemIndex, key: keyGet, source: 'get' });
+					}
+				} else if (operation === 'keys') {
+					const keyPattern = this.getNodeParameter('keyPattern', itemIndex) as string;
+					const getValues = this.getNodeParameter('getValues', itemIndex, true) as boolean;
+
+					if (getValues) {
+						// 获取匹配的keys
+						const keys: string[] = [];
+						for await (const key of client.scanIterator({ MATCH: keyPattern, COUNT: 10000 })) {
+							keys.push(key);
+							keysNeedingTypeQuery.push({ itemIndex, key, source: 'keys' });
+						}
+						keysOperationResults.set(itemIndex, keys);
+					}
+				}
+			}
+
+			// 第二步：如果有需要查询类型的key，先执行类型查询pipeline
+			const keyTypes: Map<string, string> = new Map();
+			if (keysNeedingTypeQuery.length > 0) {
+				const typePipeline = client.multi();
+				for (const keyOp of keysNeedingTypeQuery) {
+					typePipeline.type(keyOp.key);
+				}
+				const typeResults = await typePipeline.exec();
+
+				for (let i = 0; i < keysNeedingTypeQuery.length; i++) {
+					const actualType = (typeResults[i] as string) || 'string';
+					keyTypes.set(keysNeedingTypeQuery[i].key, actualType);
+				}
+			}
+
+			// 第三步：构建主要的pipeline命令
 			const pipeline = client.multi();
 			const itemOperations: Array<{
 				itemIndex: number;
 				operation: string;
 				item: INodeExecutionData;
 				commandCount: number;
-				hasTypeCommand?: boolean;
 			}> = [];
 
-			// 准备所有的pipeline命令
-			let totalCommands = 0;
 			for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 				try {
 					const itemOperation = {
@@ -675,7 +722,6 @@ export class Redis implements INodeType {
 						operation,
 						item: { json: {}, pairedItem: { item: itemIndex } },
 						commandCount: 0,
-						hasTypeCommand: false,
 					};
 
 					if (operation === 'delete') {
@@ -688,41 +734,45 @@ export class Redis implements INodeType {
 						const keyGet = this.getNodeParameter('key', itemIndex) as string;
 						const keyType = this.getNodeParameter('keyType', itemIndex) as string;
 
+						// 确定实际类型
+						let actualType = keyType;
 						if (keyType === 'automatic') {
-							pipeline.type(keyGet);
-							itemOperation.hasTypeCommand = true;
-							itemOperation.commandCount++;
+							actualType = keyTypes.get(keyGet) || 'string';
 						}
 
-						// 根据类型添加获取值的命令
-						if (keyType === 'string' || keyType === 'automatic') {
+						// 根据实际类型添加获取值的命令
+						if (actualType === 'string') {
 							pipeline.get(keyGet);
-						} else if (keyType === 'hash') {
+						} else if (actualType === 'hash') {
 							pipeline.hGetAll(keyGet);
-						} else if (keyType === 'list') {
+						} else if (actualType === 'list') {
 							pipeline.lRange(keyGet, 0, -1);
-						} else if (keyType === 'sets') {
+						} else if (actualType === 'set') {
 							pipeline.sMembers(keyGet);
 						}
-						itemOperation.commandCount++;
+						itemOperation.commandCount = 1;
 					} else if (operation === 'keys') {
-						const keyPattern = this.getNodeParameter('keyPattern', itemIndex) as string;
 						const getValues = this.getNodeParameter('getValues', itemIndex, true) as boolean;
-
-						// keys操作比较复杂，我们暂时使用传统方式
-						const keys: string[] = [];
-						for await (const key of client.scanIterator({ MATCH: keyPattern, COUNT: 10000 })) {
-							keys.push(key);
-						}
+						const keys = keysOperationResults.get(itemIndex) || [];
 
 						if (!getValues) {
 							returnItems.push({ json: { keys } });
 							continue;
 						}
 
-						// 为每个key添加getValue命令
+						// 根据实际类型为每个key添加获取值命令
 						for (const keyName of keys) {
-							pipeline.get(keyName); // 默认先尝试string类型
+							const actualType = keyTypes.get(keyName) || 'string';
+
+							if (actualType === 'string') {
+								pipeline.get(keyName);
+							} else if (actualType === 'hash') {
+								pipeline.hGetAll(keyName);
+							} else if (actualType === 'list') {
+								pipeline.lRange(keyName, 0, -1);
+							} else if (actualType === 'set') {
+								pipeline.sMembers(keyName);
+							}
 							itemOperation.commandCount++;
 						}
 					} else if (operation === 'set') {
@@ -889,7 +939,6 @@ export class Redis implements INodeType {
 					}
 
 					itemOperations.push(itemOperation);
-					totalCommands += itemOperation.commandCount;
 				} catch (error) {
 					if (this.continueOnFail()) {
 						returnItems.push({
@@ -934,15 +983,9 @@ export class Redis implements INodeType {
 								'propertyName',
 								itemOp.itemIndex,
 							) as string;
-							const keyType = this.getNodeParameter('keyType', itemOp.itemIndex) as string;
 							const options = this.getNodeParameter('options', itemOp.itemIndex, {});
 
-							let actualType = keyType;
-							if (itemOp.hasTypeCommand) {
-								actualType = (results[resultIndex] as string) || 'string';
-								resultIndex++;
-							}
-
+							// 直接从pipeline结果获取值，类型已经在第一次pipeline中确定
 							const value = results[resultIndex] ?? null;
 							resultIndex++;
 
@@ -954,8 +997,31 @@ export class Redis implements INodeType {
 
 							returnItems.push(item);
 						} else if (itemOp.operation === 'keys') {
-							// keys操作已经在上面处理过了，这里跳过
-							resultIndex += itemOp.commandCount;
+							const getValues = this.getNodeParameter(
+								'getValues',
+								itemOp.itemIndex,
+								true,
+							) as boolean;
+							const keys = keysOperationResults.get(itemOp.itemIndex) || [];
+
+							if (!getValues) {
+								// 如果不需要获取值，直接返回key列表（已经在前面处理过了）
+								// 这里什么都不需要做，因为结果已经在前面添加了
+							} else {
+								// 构建key-value映射
+								const keyValueMap: Record<string, unknown> = {};
+								for (const keyName of keys) {
+									const value = results[resultIndex] ?? null;
+									keyValueMap[keyName] = value;
+									resultIndex++;
+								}
+								returnItems.push({
+									json: {
+										keys,
+										values: keyValueMap,
+									},
+								});
+							}
 						} else if (itemOp.operation === 'set') {
 							returnItems.push(items[itemOp.itemIndex]);
 							resultIndex += itemOp.commandCount;
