@@ -679,15 +679,16 @@ export class Redis implements INodeType {
 					const keyPattern = this.getNodeParameter('keyPattern', itemIndex) as string;
 					const getValues = this.getNodeParameter('getValues', itemIndex, true) as boolean;
 
-					if (getValues) {
-						// 获取匹配的keys
-						const keys: string[] = [];
-						for await (const key of client.scanIterator({ MATCH: keyPattern, COUNT: 10000 })) {
-							keys.push(key);
+					// 无论是否需要获取值，都要先收集匹配的keys
+					const keys: string[] = [];
+					for await (const key of client.scanIterator({ MATCH: keyPattern, COUNT: 10000 })) {
+						keys.push(key);
+						// 只有当需要获取值时才需要查询类型
+						if (getValues) {
 							keysNeedingTypeQuery.push({ itemIndex, key, source: 'keys' });
 						}
-						keysOperationResults.set(itemIndex, keys);
 					}
+					keysOperationResults.set(itemIndex, keys);
 				}
 			}
 
