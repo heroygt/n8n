@@ -748,7 +748,7 @@ export class Redis implements INodeType {
 							pipeline.hGetAll(keyGet);
 						} else if (actualType === 'list') {
 							pipeline.lRange(keyGet, 0, -1);
-						} else if (actualType === 'set') {
+						} else if (actualType === 'set' || actualType === 'sets') {
 							pipeline.sMembers(keyGet);
 						}
 						itemOperation.commandCount = 1;
@@ -770,7 +770,7 @@ export class Redis implements INodeType {
 									pipeline.hGetAll(keyName);
 								} else if (actualType === 'list') {
 									pipeline.lRange(keyName, 0, -1);
-								} else if (actualType === 'set') {
+								} else if (actualType === 'set' || actualType === 'sets') {
 									pipeline.sMembers(keyName);
 								}
 								itemOperation.commandCount++;
