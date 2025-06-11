@@ -817,16 +817,12 @@ export class Redis implements INodeType {
 								itemOperation.commandCount++;
 							}
 						} else if (actualType === 'list') {
-							pipeline.del(keySet);
-							itemOperation.commandCount++;
 							const valueArray = Array.isArray(value) ? value : [value];
-							for (const item of valueArray) {
-								pipeline.rPush(keySet, item.toString());
+							for (let index = 0; index < valueArray.length; index++) {
+								pipeline.lSet(keySet, index, valueArray[index].toString());
 								itemOperation.commandCount++;
 							}
 						} else if (actualType === 'sets') {
-							pipeline.del(keySet);
-							itemOperation.commandCount++;
 							if (Array.isArray(value)) {
 								for (const item of value) {
 									pipeline.sAdd(keySet, item.toString());
