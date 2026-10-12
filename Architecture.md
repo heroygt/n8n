@@ -34,3 +34,9 @@
 - With queue mode and `OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=true`, 2.42.6 does not start a main task broker. Require JS and Python registration on the worker; the retained main runner waits idle. Check both launcher health endpoints.
 - A failure before migrations resumes the original containers. Once migrations start, preserve the database snapshot for a controlled recovery rather than silently restoring live data.
 - noam88 remains outside the authorized rollout scope until the user confirms noam02 and chooses to proceed there.
+
+## 2026-10-12: 2.42.7 patch rollout
+
+- Merge official `n8n@2.42.7` (`92e4ff858a6ec0dc3ce3995d8696861575698bd0`) into `my-server`. This tag descends directly from 2.42.6; none of its changes overlap the seven custom files.
+- Reuse the established server build, image promotion, and deployment scripts with version/log parameters. Keep Node/pnpm, proxy, store, and build cache from the accepted 2.42.6 pipeline.
+- Per user instruction, omit comprehensive tests; source fidelity, build completion, quick image smoke checks, and live readiness are the acceptance gates.

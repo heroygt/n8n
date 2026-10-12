@@ -40,3 +40,15 @@
 - Verify version, database readiness, main/worker health, runner connectivity, and the existing frontend route after deployment.
 - Record the result and rollback references. Ask the user to confirm the noam02 result after these checks pass.
 - Do not upgrade noam88 until the user confirms noam02 and explicitly decides to proceed there.
+
+### Runtime result
+
+- 2026-10-12: noam02 was restarted on 2.42.6. Main/worker readiness, worker JS/Python registration, both launcher health endpoints, and the public route passed. Preserved 232 workflows, 125 active workflows, and 33 credentials. A private backup was taken before 47 migrations (241 to 288).
+- User review was superseded by the immediate 2.42.7 upgrade request below. noam88 remains untouched.
+
+## 2026-10-12: Immediate patch upgrade to 2.42.7
+
+- Merge official `n8n@2.42.7`, preserve all custom changes, and deliver source through GitHub `my-server`.
+- Rebuild and publish the existing custom default images on noam02, then restart its main, worker, and runner services.
+- The user explicitly requests a simpler patch upgrade: do not repeat comprehensive tests. Use source/version checks, the required build, image smoke checks, and runtime readiness verification.
+- Preserve rollback images and a private pre-restart backup. Continue to leave noam88 unchanged until separately authorized.

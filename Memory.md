@@ -18,3 +18,4 @@
 - noam02 build history uses `http://10.110.63.114:8080`. Export both uppercase and lowercase HTTP/HTTPS proxy variables for Git and dependency installs. Pass them into Docker build steps too. Exclude localhost and internal registry hosts with `NO_PROXY` and `no_proxy`.
 - The user's custom image names use default `latest` tags. A versioned candidate alone does not complete an upgrade. After acceptance, update both existing custom tags and publish them, keeping rollback references.
 - Queue mode with `OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=true` disables the main task broker in 2.42.6 (`commands/start.ts`). Do not require runner registration there; verify worker registration and actual execution. The retained main runner can remain healthy and idle.
+- For the immediate 2.42.7 patch rollout, the user explicitly requested no repeated comprehensive tests. Reuse the validated pipeline and keep only build, source/version, image smoke, and startup checks.

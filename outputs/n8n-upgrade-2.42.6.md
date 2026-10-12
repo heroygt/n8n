@@ -73,6 +73,15 @@ The previous images are retained on noam02 under:
 - `10.132.134.63:5000/n8n-custom:latest-rollback-20261012084023` — original ID `1fdc68b4835c`.
 - `10.132.134.63:5000/n8n-runner-custom:latest-rollback-20261012084023` — original ID `210fdaf9d447`.
 
-These rollback tags are local to the server. Retag and push them to restore the old registry defaults if needed. No running service was recreated in this task; the existing containers still use the previous image IDs.
+These rollback tags are local to the server. Retag and push them to restore the old registry defaults if needed. The initial image-only phase did not recreate services; the subsequent authorized runtime rollout supersedes that state.
 
 The new release blocks additions or changes to deprecated nodes by default. Saved workflows can still run them. `N8N_DEPRECATED_NODES_BLOCK=false` supports older imports when needed.
+
+## Authorized runtime rollout
+
+- noam02 main, worker, and both runners were recreated on 2026-10-12 around 17:27 CST using these accepted default images.
+- Private pre-migration backup: `/data/withPostgresAndWorker/upgrade-backups/n8n-2.42.6-20261012092602`. PostgreSQL archive, n8n storage, Redis snapshot, and deployment configuration were saved and checked.
+- Runtime verification passed at 17:36 CST: both n8n versions are 2.42.6, main/worker readiness and both launcher health endpoints return 200, worker JS/Python runners register, and the public route returns 200.
+- Workflows/active workflows/credentials stayed 232/125/33. Migrations increased from 241 to 288. PostgreSQL and Redis container IDs are unchanged; encryption key, database password, and runner auth token are preserved.
+- An initial registration check incorrectly required a main broker. The existing queue/offload configuration intentionally disables it in 2.42.6. The helper was corrected through GitHub `my-server` (`59d901f0aa`), and read-only verification passed without another restart.
+- Runtime evidence: `/data/n8n/work/n8n-upgrade-2.42.6/deployment-verify/summary.json`. noam88 was untouched. The user's next instruction advances the active target to 2.42.7.
