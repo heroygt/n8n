@@ -34,6 +34,9 @@ function stringifyToolValue(value: unknown): string {
 }
 
 function formatTimelineEvent(event: TimelineEvent): string {
+	if (event.type === 'background-task-signal') {
+		return `Background task results received: ${stringifyToolValue(event.signal.tasks)}`;
+	}
 	if (event.type === 'text') {
 		return `Assistant: ${truncate(event.content, MAX_TEXT_CHARS)}`;
 	}
@@ -42,6 +45,9 @@ function formatTimelineEvent(event: TimelineEvent): string {
 	}
 	if (event.type === 'suspension') {
 		return `[suspended waiting on ${event.toolName}]`;
+	}
+	if (event.type === 'hitl-response') {
+		return `Human response: ${stringifyToolValue(event.response)}`;
 	}
 	const durationMs = event.endTime > 0 ? event.endTime - event.startTime : null;
 	const headerParts = [
@@ -83,16 +89,29 @@ function selectTurnExecutions(
 	let anchorIndex = executions.findIndex((execution) => execution.id === executionId);
 	if (anchorIndex === -1) return null;
 
-	while (anchorIndex > 0 && executions[anchorIndex].userMessage === null) {
+	while (
+		anchorIndex > 0 &&
+		continuesExecution(executions[anchorIndex - 1], executions[anchorIndex])
+	) {
 		anchorIndex--;
 	}
 
 	const selected = [executions[anchorIndex]];
 	for (let i = anchorIndex + 1; i < executions.length; i++) {
-		if (executions[i].userMessage !== null) break;
+		if (!continuesExecution(executions[i - 1], executions[i])) break;
 		selected.push(executions[i]);
 	}
 	return selected;
+}
+
+function continuesExecution(previous: AgentExecution, current: AgentExecution): boolean {
+	if (current.inputMessageIds !== undefined) {
+		return (
+			current.inputMessageIds.length > 0 &&
+			current.inputMessageIds[0] === previous.inputMessageIds?.[0]
+		);
+	}
+	return current.userMessage === null;
 }
 
 /**

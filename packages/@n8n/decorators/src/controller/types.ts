@@ -3,6 +3,7 @@ import type { BooleanLicenseFeature } from '@n8n/constants';
 import type { Constructable } from '@n8n/di';
 import type { ApiKeyScope, Scope } from '@n8n/permissions';
 import type { RequestHandler, Router } from 'express';
+import type { ZodTypeAny } from 'zod';
 
 import type { KeyedRateLimiterConfig, RateLimiterLimits } from './rate-limit';
 
@@ -13,9 +14,20 @@ export type ApiKeyScopeRequirement =
 
 export type ResponseDtoClass = Pick<ZodClass, 'parse'>;
 
+export type SuccessStatus = 200 | 201 | 202 | 204;
+
+export interface ErrorResponse {
+	status: number;
+	dto?: ResponseDtoClass;
+	description?: string;
+}
+
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
 
-export type Arg = { type: 'body' | 'query' } | { type: 'param'; key: string };
+export type Arg =
+	| { type: 'body'; required?: boolean }
+	| { type: 'query' }
+	| { type: 'param'; key: string; schema?: ZodTypeAny };
 
 export interface CorsOptions {
 	allowedOrigins: string[];
@@ -30,6 +42,11 @@ export type HandlerName = string;
 export interface AccessScope {
 	scope: Scope;
 	globalOnly: boolean;
+}
+
+export interface DeprecationInfo {
+	/** When the endpoint became deprecated. Emitted as an RFC 9745 `Deprecation` header. */
+	since: Date;
 }
 
 export interface RouteMetadata {
@@ -50,9 +67,23 @@ export interface RouteMetadata {
 	/** Whether to apply keyed rate limiting to the route */
 	keyedRateLimit?: KeyedRateLimiterConfig;
 	licenseFeature?: BooleanLicenseFeature;
+	/** Public API only: gate the route on the instance being within its licensed users quota. */
+	requiresUserQuota?: boolean;
 	accessScope?: AccessScope;
 	apiKeyScope?: ApiKeyScopeRequirement;
 	responseDto?: ResponseDtoClass;
+	/** OpenAPI HTTP status sent on success, and documented as such. */
+	successStatus?: SuccessStatus;
+	/** OpenAPI operation summary. */
+	summary?: string;
+	/** OpenAPI operation description. */
+	description?: string;
+	/** OpenAPI operation tags. */
+	tags?: string[];
+	/** OpenAPI error responses. */
+	errorResponses?: ErrorResponse[];
+	/** OpenAPI deprecation; also emits an RFC 9745 `Deprecation` header at request time. */
+	deprecated?: DeprecationInfo;
 	args: Arg[];
 	router?: Router;
 }

@@ -9,6 +9,7 @@ import {
 	MANUAL_CHAT_TRIGGER_NODE_NAME,
 } from '../../../config/constants';
 import { expect, test } from '../../../fixtures/base';
+import { PROXY_WITHOUT_COMMUNITY_PACKAGES } from '../../../fixtures/capabilities';
 import type { n8nPage } from '../../../pages/n8nPage';
 
 async function addOpenAILanguageModelWithCredentials(
@@ -27,12 +28,6 @@ async function addOpenAILanguageModelWithCredentials(
 		apiKey: 'abcd',
 	});
 	await n8n.ndv.clickBackToCanvasButton();
-}
-
-async function waitForWorkflowSuccess(n8n: n8nPage, timeout = 3000) {
-	await n8n.notifications.waitForNotificationAndClose('Workflow executed successfully', {
-		timeout,
-	});
 }
 
 async function setEditorText(n8n: n8nPage, parameterName: string, value: string) {
@@ -63,17 +58,12 @@ interface OpenAIResponsesRequest {
 }
 
 const hitlForToolsTestConfig = {
-	capability: {
-		services: ['proxy'],
-		env: {
-			N8N_COMMUNITY_PACKAGES_ENABLED: 'false',
-		},
-	},
+	capability: PROXY_WITHOUT_COMMUNITY_PACKAGES,
 } as const;
 
 test.use(hitlForToolsTestConfig);
 test.describe(
-	'HITL for Tools @capability:proxy',
+	'HITL for Tools',
 	{
 		annotation: [{ type: 'owner', description: 'AI' }],
 	},
@@ -167,7 +157,14 @@ test.describe(
 			const approveButton = n8n.canvas.manualChat.getApproveButton();
 			await expect(approveButton).toBeVisible({ timeout: 15000 });
 			await approveButton.click({ button: 'middle' });
-			await waitForWorkflowSuccess(n8n);
+
+			// Approving resumes the run, the tool executes, and the Chat node posts the
+			// agent's answer back. A chat run on an unsaved workflow shows no
+			// execution-success toast, so that reply is the completion signal.
+			await expect(n8n.canvas.getManualChatLatestBotMessage()).toContainText(
+				'sent the welcome email to john@gmail.com',
+				{ timeout: 15000 },
+			);
 		});
 
 		// Regression test for the community forum issue AI-2656: after clicking

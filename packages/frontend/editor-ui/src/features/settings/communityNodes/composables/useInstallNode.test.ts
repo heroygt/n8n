@@ -8,7 +8,7 @@ import {
 	useWorkflowDocumentStore,
 	createWorkflowDocumentId,
 } from '@/app/stores/workflowDocument.store';
-import { useSettingsStore } from '@/app/stores/settings.store';
+import { useSettingsStore } from '@n8n/stores/settings.store';
 import type { CommunityNodeType } from '@n8n/api-types';
 import { createTestingPinia } from '@pinia/testing';
 import { setActivePinia } from 'pinia';
@@ -202,11 +202,7 @@ describe('useInstallNode', () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(communityNodesStore.installPackage).toHaveBeenCalledWith(
-				'test-package',
-				true,
-				'1.0.0',
-			);
+			expect(communityNodesStore.installPackage).toHaveBeenCalledWith('test-package', '1.0.0');
 		});
 
 		it('should install verified node with npm version', async () => {
@@ -219,11 +215,7 @@ describe('useInstallNode', () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(communityNodesStore.installPackage).toHaveBeenCalledWith(
-				'test-package',
-				true,
-				'1.0.0',
-			);
+			expect(communityNodesStore.installPackage).toHaveBeenCalledWith('test-package', '1.0.0');
 			expect(nodeTypesStore.getNodeTypes).toHaveBeenCalled();
 			expect(nodeTypesStore.fetchCommunityNodePreviews).toHaveBeenCalled();
 			expect(credentialsStore.fetchCredentialTypes).toHaveBeenCalledWith(true);
@@ -248,11 +240,7 @@ describe('useInstallNode', () => {
 
 			expect(result.success).toBe(true);
 			expect(nodeTypesStore.getCommunityNodeAttributes).toHaveBeenCalledWith('test-node');
-			expect(communityNodesStore.installPackage).toHaveBeenCalledWith(
-				'test-package',
-				true,
-				'1.0.0',
-			);
+			expect(communityNodesStore.installPackage).toHaveBeenCalledWith('test-package', '1.0.0');
 		});
 
 		it('should install verified node as latest when unverified packages are enabled', async () => {
@@ -404,6 +392,31 @@ describe('useInstallNode', () => {
 			);
 		});
 
+		it('should show the dedicated title when the package requires an unsupported node API version', async () => {
+			const error = Object.assign(
+				new Error('This community node requires n8n node API version 3.'),
+				{
+					httpStatusCode: 400,
+					meta: { requiredNodesApiVersion: 3, supportedNodesApiVersion: 1 },
+				},
+			);
+			vi.mocked(communityNodesStore.installPackage).mockRejectedValue(error);
+
+			const { installNode } = useInstallNode();
+
+			const result = await installNode({
+				type: 'verified',
+				packageName: 'test-package',
+				nodeType: 'test-node',
+			});
+
+			expect(result.success).toBe(false);
+			expect(showError).toHaveBeenCalledWith(
+				error,
+				'settings.communityNodes.messages.install.incompatible.title',
+			);
+		});
+
 		it('should handle getNpmVersion returning undefined', async () => {
 			vi.mocked(nodeTypesStore.getCommunityNodeAttributes).mockResolvedValue(null);
 
@@ -416,11 +429,7 @@ describe('useInstallNode', () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(communityNodesStore.installPackage).toHaveBeenCalledWith(
-				'test-package',
-				true,
-				undefined,
-			);
+			expect(communityNodesStore.installPackage).toHaveBeenCalledWith('test-package', undefined);
 		});
 
 		it('should handle getNpmVersion errors', async () => {
@@ -542,11 +551,7 @@ describe('useInstallNode', () => {
 			});
 
 			expect(nodeTypesStore.getCommunityNodeAttributes).toHaveBeenCalledWith('test-node');
-			expect(communityNodesStore.installPackage).toHaveBeenCalledWith(
-				'test-package',
-				true,
-				'2.0.0',
-			);
+			expect(communityNodesStore.installPackage).toHaveBeenCalledWith('test-package', '2.0.0');
 		});
 	});
 

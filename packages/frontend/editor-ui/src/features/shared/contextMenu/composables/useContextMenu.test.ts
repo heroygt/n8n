@@ -23,11 +23,19 @@ import { useSourceControlStore } from '@/features/integrations/sourceControl.ee/
 import { useUIStore } from '@/app/stores/ui.store';
 import { useWorkflowsStore } from '@/app/stores/workflows.store';
 import { useFocusedNodesStore } from '@/features/ai/assistant/focusedNodes.store';
+import { useSettingsStore } from '@n8n/stores/settings.store';
+import { useTypeAvailabilityPoliciesStore } from '@n8n/frontend-module-type-availability-policies';
 import {
 	useWorkflowDocumentStore,
 	createWorkflowDocumentId,
 	injectWorkflowDocumentStore,
 } from '@/app/stores/workflowDocument.store';
+
+const mockEmptyCanvasGroupsEnabled = vi.hoisted(() => ({ value: true }));
+
+vi.mock('@/features/workflows/canvas/composables/useEmptyCanvasGroupsFlag', () => ({
+	useEmptyCanvasGroupsFlag: () => mockEmptyCanvasGroupsEnabled,
+}));
 
 vi.mock('@/app/stores/workflowDocument.store', async (importOriginal) => ({
 	...(await importOriginal()),
@@ -118,6 +126,7 @@ describe('useContextMenu', () => {
 	// `restoreMocks` restores spies before each test, so re-establish them per-test.
 	beforeEach(() => {
 		groupViewState.current = undefined;
+		mockEmptyCanvasGroupsEnabled.value = true;
 		setActivePinia(createPinia());
 		sourceControlStore = useSourceControlStore();
 		vi.spyOn(sourceControlStore, 'preferences', 'get').mockReturnValue({
@@ -181,6 +190,29 @@ describe('useContextMenu', () => {
 			open(mockEvent, { source: 'canvas', nodeIds: selectedNodes.map((n) => n.id) });
 
 			expect(actions.value.some((action) => action.id === 'focus_ai_on_selected')).toBe(false);
+		});
+	});
+
+	describe('extract_sub_workflow gating', () => {
+		it('hides convert to sub-workflow when executeWorkflow is excluded', () => {
+			const settingsStore = useSettingsStore();
+			vi.spyOn(settingsStore, 'isSubworkflowConversionDisabled', 'get').mockReturnValue(true);
+
+			const { open, actions } = useContextMenu();
+			open(mockEvent, { source: 'canvas', nodeIds: selectedNodes.map((n) => n.id) });
+
+			expect(actions.value.some((action) => action.id === 'extract_sub_workflow')).toBe(false);
+		});
+
+		it('hides convert to sub-workflow on a group target when executeWorkflow is excluded', () => {
+			const settingsStore = useSettingsStore();
+			vi.spyOn(settingsStore, 'isSubworkflowConversionDisabled', 'get').mockReturnValue(true);
+			const group = workflowDocumentStore.createGroup([nodes[0].id, nodes[1].id], 'My group');
+
+			const { open, actions } = useContextMenu();
+			open(mockEvent, { source: 'group', groupId: group.id, nodeIds: group.nodeIds });
+
+			expect(actions.value.some((action) => action.id === 'extract_sub_workflow')).toBe(false);
 		});
 	});
 
@@ -293,6 +325,38 @@ describe('useContextMenu', () => {
 				expect(ids).not.toContain(singleNodeAction);
 			}
 			expect(actions.value.find((action) => action.id === 'copy')?.label).toBe('Copy group');
+			expect(actions.value.find((action) => action.id === 'tidy_up')?.label).toBe(
+				'Tidy up selection',
+			);
+		});
+
+		it('hides ungroup and convert actions for an empty group', () => {
+			const anchor = nodeFactory({ parameters: { emptyGroupAnchor: true } });
+			workflowDocumentStore.setNodes([...nodes, anchor]);
+			const group = workflowDocumentStore.createGroup([anchor.id], 'Empty group');
+			const { open, actions } = useContextMenu();
+			open(mockEvent, { source: 'group', groupId: group.id, nodeIds: group.nodeIds });
+
+			const ids = actions.value.map((action) => action.id);
+			expect(ids).not.toContain('ungroup_nodes');
+			expect(ids).not.toContain('extract_sub_workflow');
+			expect(ids).toContain('rename_group');
+		});
+
+		it('refreshes the target to the anchor when the last real member is deleted', () => {
+			const anchor = nodeFactory({ parameters: { emptyGroupAnchor: true } });
+			workflowDocumentStore.setNodes([...nodes, anchor]);
+			const group = workflowDocumentStore.createGroup([nodes[0].id], 'Empty group');
+			const { open, actions, targetNodeIds } = useContextMenu();
+			open(mockEvent, { source: 'group', groupId: group.id, nodeIds: group.nodeIds });
+
+			workflowDocumentStore.replaceNodeInGroup(group.id, nodes[0].id, anchor.id);
+			workflowDocumentStore.setNodes([...nodes.slice(1), anchor]);
+
+			expect(targetNodeIds.value).toEqual([anchor.id]);
+			const ids = actions.value.map((action) => action.id);
+			expect(ids).not.toContain('ungroup_nodes');
+			expect(ids).not.toContain('extract_sub_workflow');
 		});
 
 		it('falls back to the group actions alone when no member node resolves', () => {
@@ -1000,6 +1064,44 @@ describe('useContextMenu', () => {
 			expect(isOpen.value).toBe(true);
 			expect(actions.value).toMatchSnapshot();
 			expect(targetNodeIds.value).toEqual([node.id]);
+		});
+	});
+
+	describe('restricted node type', () => {
+		const restrictedNode = nodeFactory({ type: 'n8n-nodes-base.slack' });
+
+		beforeEach(() => {
+			workflowDocumentStore.setNodes([...nodes, restrictedNode]);
+			const typeAvailabilityPoliciesStore = useTypeAvailabilityPoliciesStore();
+			vi.spyOn(typeAvailabilityPoliciesStore, 'getNodeTypeAvailability').mockImplementation(
+				(name) => ({ name, available: name !== restrictedNode.type }),
+			);
+		});
+
+		it('keeps replace, rename, open, deactivate and copy available but blocks running, pinning and duplicating', () => {
+			const { open, actions } = useContextMenu();
+			open(mockEvent, { source: 'node-right-click', nodeId: restrictedNode.id });
+
+			const byId = Object.fromEntries(actions.value.map((action) => [action.id, action]));
+			expect(byId.replace?.disabled).toBe(false);
+			expect(byId.rename?.disabled).toBe(false);
+			expect(byId.open).toBeDefined();
+			expect(byId.open?.disabled).toBeFalsy();
+			expect(byId.toggle_activation?.disabled).toBe(false);
+			expect(byId.execute?.disabled).toBe(true);
+			expect(byId.toggle_pin?.disabled).toBe(true);
+			expect(byId.copy?.disabled).toBeFalsy();
+			expect(byId.duplicate?.disabled).toBe(true);
+		});
+
+		it('blocks pinning and duplicating but allows copying a selection that contains a restricted node', () => {
+			const { open, actions } = useContextMenu();
+			open(mockEvent, { source: 'canvas', nodeIds: [nodes[0].id, restrictedNode.id] });
+
+			const byId = Object.fromEntries(actions.value.map((action) => [action.id, action]));
+			expect(byId.toggle_pin?.disabled).toBe(true);
+			expect(byId.copy?.disabled).toBeFalsy();
+			expect(byId.duplicate?.disabled).toBe(true);
 		});
 	});
 });

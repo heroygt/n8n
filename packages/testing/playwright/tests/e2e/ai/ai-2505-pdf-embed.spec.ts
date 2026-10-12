@@ -1,5 +1,7 @@
 import { test } from '../../../fixtures/base';
 
+test.use({ capability: { env: { N8N_DEPRECATED_NODES_BLOCK: 'false' } } });
+
 /**
  * Regression guard for AI-2505 — PDF embedding via Default Data Loader →
  * In-Memory Vector Store insert was throwing
@@ -29,7 +31,7 @@ test.describe(
 
 			// If PDF parsing fails (the AI-2505 regression), no success
 			// notification ever appears and this assertion times out.
-			await n8n.notifications.waitForNotificationAndClose('Workflow executed successfully', {
+			await n8n.notifications.waitForNotificationAndClose('Node executed successfully', {
 				timeout: 30000,
 			});
 		});

@@ -6,7 +6,15 @@ import type { TimelineEvent } from '../execution-recorder';
 
 type ExecutionTranscript = Pick<
 	AgentExecution,
-	'id' | 'userMessage' | 'timeline' | 'attachments' | 'status'
+	| 'id'
+	| 'userMessage'
+	| 'author'
+	| 'timeline'
+	| 'attachments'
+	| 'status'
+	| 'error'
+	| 'createdAt'
+	| 'inputMessages'
 >;
 
 type ToolCallTimelineEvent = Extract<TimelineEvent, { type: 'tool-call' }>;
@@ -47,6 +55,7 @@ function mergeTerminalToolCallPart(
 		...previous,
 		...terminal,
 		input: previous.input ?? terminal.input,
+		suspendPayload: previous.suspendPayload ?? terminal.suspendPayload,
 		startTime: previous.startTime ?? terminal.startTime,
 		endTime: terminal.endTime ?? previous.endTime,
 		canceled: terminal.canceled ?? previous.canceled,
@@ -122,6 +131,16 @@ function assistantContentFromExecution(
 			});
 		} else if (event.type === 'tool-call') {
 			content.push(timelineToolCallToPart(event));
+		} else if (event.type === 'suspension') {
+			const suspendedToolCall = [...content]
+				.reverse()
+				.find(
+					(part): part is ToolCallContentPart =>
+						isToolCallWithId(part) && part.toolCallId === event.toolCallId,
+				);
+			if (suspendedToolCall) {
+				suspendedToolCall.suspendPayload = event.suspendPayload ?? event.input;
+			}
 		}
 	}
 
@@ -131,11 +150,13 @@ function assistantContentFromExecution(
 export function executionToMessagesDto(execution: ExecutionTranscript): AgentPersistedMessageDto[] {
 	const messages: AgentPersistedMessageDto[] = [];
 
-	// Message `id` stays `${execution.id}:role` for stable client keys. Turn
-	// scope for handoff/history is the explicit `executionId` field — do not
-	// make consumers parse it back out of `id`.
+	// Canonical inputs keep their message IDs. Trace messages and legacy inputs
+	// keep execution-based IDs. Use executionId to identify the turn.
 	const userContent: AgentPersistedMessageContentPart[] = [];
 	const userText = execution.userMessage === null ? null : textPart(execution.userMessage);
+	// Trace messages and legacy inputs use the execution timestamp.
+	const createdAt = execution.createdAt.toISOString();
+
 	if (userText) userContent.push(userText);
 	for (const attachment of execution.attachments ?? []) {
 		userContent.push({
@@ -146,23 +167,42 @@ export function executionToMessagesDto(execution: ExecutionTranscript): AgentPer
 			sizeBytes: attachment.sizeBytes,
 		});
 	}
-	if (userContent.length > 0) {
+	if (execution.inputMessages !== undefined) {
+		messages.push(...execution.inputMessages);
+	} else if (userContent.length > 0) {
 		messages.push({
 			id: `${execution.id}:user`,
 			role: 'user',
 			content: userContent,
+			...(execution.author ? { author: execution.author } : {}),
 			executionId: execution.id,
+			createdAt,
 		});
 	}
 
+	const backgroundJobSignal = execution.timeline?.find(
+		(event) => event.type === 'background-task-signal',
+	)?.signal;
 	const assistantContent = assistantContentFromExecution(execution);
-	if (assistantContent.length > 0) {
+	// The recorded run error travels with the transcript so history renders the
+	// same error bubble the live stream showed — also when the turn failed
+	// before producing any output at all (otherwise the run fails invisibly).
+	// It stays a separate field, not a text part, so the client does not show it
+	// as model output.
+	const executionError =
+		(execution.status === 'error' || execution.status === 'interrupted') && execution.error
+			? execution.error
+			: undefined;
+	if (backgroundJobSignal || assistantContent.length > 0 || executionError !== undefined) {
 		messages.push({
 			id: `${execution.id}:assistant`,
 			role: 'assistant',
 			content: assistantContent,
+			...(backgroundJobSignal ? { backgroundTaskSignal: backgroundJobSignal } : {}),
 			executionId: execution.id,
 			...(execution.status ? { executionStatus: execution.status } : {}),
+			...(executionError !== undefined ? { executionError } : {}),
+			createdAt,
 		});
 	}
 
@@ -208,5 +248,10 @@ export function executionsToMessagesDto(
 		message.content = message.content.filter((_, index) => !duplicateIndexes.has(index));
 	}
 
-	return messages.filter((message) => message.content.length > 0);
+	return messages.filter(
+		(message) =>
+			message.backgroundTaskSignal ||
+			message.content.length > 0 ||
+			message.executionError !== undefined,
+	);
 }

@@ -1,19 +1,21 @@
 import { AgentExecutor } from '@langchain/classic/agents';
 import type { OpenAIToolType } from '@langchain/classic/dist/experimental/openai_assistant/schema';
 import { OpenAIAssistantRunnable } from '@langchain/classic/experimental/openai_assistant';
-import { assertCredentialAllowsUrl, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import type {
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
+import { aiClientFetch } from '@n8n/ai-utilities';
 import { OpenAI as OpenAIClient } from 'openai';
 
 import { getConnectedTools, mergeCustomHeaders } from '@utils/helpers';
 import { getTracingConfig } from '@utils/tracing';
 
 import { formatToOpenAIAssistantTool } from './utils';
+import { assertOpenAiCredentialAllowsUrl } from '../../vendors/OpenAi/helpers/credentials';
 import { Container } from '@n8n/di';
 import { AiConfig } from '@n8n/config';
 
@@ -40,7 +42,7 @@ export class OpenAiAssistant implements INodeType {
 			resources: {
 				primaryDocumentation: [
 					{
-						url: 'https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.openaiassistant/',
+						url: 'https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-langchain.openai/assistant-operations',
 					},
 				],
 			},
@@ -350,16 +352,11 @@ export class OpenAiAssistant implements INodeType {
 				const defaultHeaders = mergeCustomHeaders(credentials, openAiDefaultHeaders ?? {});
 
 				if (options.baseURL) {
-					assertCredentialAllowsUrl({
-						node: this.getNode(),
-						credentialData: credentials,
-						url: options.baseURL,
-						pinnedUrl: typeof credentials.url === 'string' ? credentials.url : undefined,
-						surface: 'OpenAI',
-					});
+					assertOpenAiCredentialAllowsUrl(this.getNode(), credentials, options.baseURL);
 				}
 
 				const client = new OpenAIClient({
+					fetch: aiClientFetch,
 					apiKey: credentials.apiKey as string,
 					maxRetries: options.maxRetries ?? 2,
 					timeout: options.timeout ?? 10000,
