@@ -65,3 +65,4 @@
 - Pull the exact image digests built and published on noam02. Preserve default image names and deliver deployment code through GitHub `my-server`.
 - Upgrade its main, two webhook processors, eight workers, and nine runners; retain native PostgreSQL/Redis and the proxy configuration.
 - Preserve a private database/configuration backup, the writable `.n8n` directories, queue state, and rollback images before migrations. Verify versions, readiness, worker runner registration, and the existing proxy route; do not repeat comprehensive tests.
+- User subsequently instructed immediate restart. Cancel the long full execution-history dump; retain metadata/schema, configuration, queue, writable storage, and image rollback backups, then start the accepted release directly.
