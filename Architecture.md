@@ -20,5 +20,6 @@
 - Compile the workspace with two concurrent tasks. Reuse that cache for production preparation. Limit isolated-vm native compilation to four jobs by default with `N8N_NATIVE_BUILD_JOBS`.
 - Native Docker compilation uses the headers inside the pinned Node builder (`npm_config_nodedir=/usr/local`). This avoids an extra header download and keeps the headers aligned with that exact builder.
 - `--push` publishes both versioned images after acceptance succeeds. It is accepted only with `--stage all` or `--stage verify`; record the returned registry digests.
+- `--push` publishes both accepted images. Use `--stage promote --verified-report FILE --tag latest --push` to update the existing custom default tags from a successful acceptance report. The script verifies candidate image IDs and saves local rollback tags before changing either default tag.
 - Read proxy settings from environment variables. The image stage passes them to both Bake targets through a temporary mode-600 JSON override, then removes it. Do not store proxy credentials in command arguments or Dockerfiles.
 - Use `PNPM_CONFIG_STORE_DIR` with pnpm 12. The production preparation script confirms that npm-style config variables are no longer read.

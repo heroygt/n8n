@@ -11,6 +11,7 @@
 - Install dependencies from the official lockfile. Run the build, existing focused tests, package lint, and typecheck. Record each failure.
 - Build the final custom n8n and runner images on `noam02`. Use the server's existing image naming and build conventions.
 - Publish code to GitHub's `my-server` branch first. The server must fetch that branch before building. Do not use bundles for later source delivery.
+- Update the existing `n8n-custom` and `n8n-runner-custom` default `latest` tags. Versioned candidate tags are intermediate acceptance artifacts, not the final delivery names. Preserve rollback image references before updating the default tags.
 - Verify the image version and native modules before marking the task complete.
 - This request authorizes image builds. A running-service rollout is a separate step.
 
@@ -26,3 +27,4 @@
 
 - 2026-10-12: The user confirmed that the final images must be built on `noam02`. Local compilation alone does not complete the task.
 - 2026-10-12: The user requires GitHub `my-server` as the source transfer path. Align the server checkout with `origin/my-server` before continuing.
+- 2026-10-12: The user clarified that their custom images use the default tag, without release version tags. Publish the accepted images under the existing `latest` names.

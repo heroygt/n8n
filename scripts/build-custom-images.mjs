@@ -16,6 +16,7 @@ const { values } = parseArgs({
 		stage: { type: 'string', default: 'all' },
 		'source-ref': { type: 'string', default: 'origin/my-server' },
 		push: { type: 'boolean', default: false },
+		'verified-report': { type: 'string' },
 		builder: { type: 'string' },
 		platform: { type: 'string', default: 'linux/amd64' },
 		store: { type: 'string' },
@@ -30,11 +31,12 @@ if (
 	values.help ||
 	!values.image ||
 	!values['runners-image'] ||
-	!['all', 'source', ...stages].includes(values.stage) ||
-	(values.push && !['all', 'verify'].includes(values.stage))
+	!['all', 'source', 'promote', ...stages].includes(values.stage) ||
+	(values.push && !['all', 'verify', 'promote'].includes(values.stage)) ||
+	(values.stage === 'promote' && !values['verified-report'])
 ) {
 	console.log(
-		'Usage: node scripts/build-custom-images.mjs --image REPOSITORY --runners-image REPOSITORY [--tag TAG] [--version VERSION] [--stage all|source|install|build|prepare|images|verify] [--source-ref REF] [--push (all or verify stages)] [--builder NAME] [--platform PLATFORM] [--store DIR] [--log-dir DIR] [--concurrency NUMBER] [--memory MB]',
+		'Usage: node scripts/build-custom-images.mjs --image REPOSITORY --runners-image REPOSITORY [--tag TAG] [--version VERSION] [--stage all|source|install|build|prepare|images|verify|promote] [--verified-report FILE (promote stage)] [--source-ref REF] [--push (all, verify or promote stages)] [--builder NAME] [--platform PLATFORM] [--store DIR] [--log-dir DIR] [--concurrency NUMBER] [--memory MB]',
 	);
 	process.exit(values.help ? 0 : 2);
 }
@@ -206,6 +208,46 @@ try {
 	summary.sourceVerified = true;
 	console.log(`PASS source matches ${values['source-ref']} with a clean tracked checkout`);
 	for (const stage of values.stage === 'all' ? stages : [values.stage]) {
+		if (stage === 'promote') {
+			const verified = JSON.parse(readFileSync(resolve(root, values['verified-report']), 'utf8'));
+			assert.equal(verified.ok, true, 'image acceptance must have passed before promotion');
+			assert.equal(
+				verified.sourceVerified,
+				true,
+				'accepted images must come from the source branch',
+			);
+			assert.equal(verified.version, values.version);
+			assert.equal(verified.artifacts.length, images.length);
+			const stamp = new Date().toISOString().replaceAll(/[^\d]/g, '').slice(0, 14);
+			const plan = images.map((image, index) => {
+				const artifact = verified.artifacts[index];
+				assert.equal(
+					artifact.image.slice(0, artifact.image.lastIndexOf(':')),
+					image.slice(0, image.lastIndexOf(':')),
+				);
+				const [candidate] = JSON.parse(capture('docker', ['image', 'inspect', artifact.image]));
+				assert.equal(candidate.Id, artifact.id, 'accepted image must still have the same ID');
+				assert.equal(candidate.Config.Labels['org.opencontainers.image.version'], values.version);
+				const [previous] = JSON.parse(capture('docker', ['image', 'inspect', image]));
+				return {
+					...artifact,
+					image,
+					previousId: previous.Id,
+					rollbackImage: `${image}-rollback-${stamp}`,
+				};
+			});
+			summary.verifiedSourceCommit = verified.sourceCommit;
+			summary.artifacts = plan;
+			save();
+			for (const [index, artifact] of plan.entries()) {
+				await run(`backup-${index}`, 'docker', [
+					'tag',
+					artifact.previousId,
+					artifact.rollbackImage,
+				]);
+				await run(`promote-${index}`, 'docker', ['tag', artifact.id, artifact.image]);
+			}
+		}
 		if (stage === 'install')
 			await run(stage, 'pnpm', [
 				'agent:setup',

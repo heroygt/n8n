@@ -16,3 +16,4 @@
 - Initial direct Git fetch failures on noam02 were temporarily handled with protocol 0 and HTTP/1.1. The existing server build history shows that outbound operations should use its HTTP proxy instead. Run detached Git operations under `setsid` so closing the JumpServer PTY cannot interrupt them.
 - The pinned Alpine Node builder includes its headers under `/usr/local/include/node`. Point node-gyp at `/usr/local` when a separate header download stalls.
 - noam02 build history uses `http://10.110.63.114:8080`. Export both uppercase and lowercase HTTP/HTTPS proxy variables for Git and dependency installs. Pass them into Docker build steps too. Exclude localhost and internal registry hosts with `NO_PROXY` and `no_proxy`.
+- The user's custom image names use default `latest` tags. A versioned candidate alone does not complete an upgrade. After acceptance, update both existing custom tags and publish them, keeping rollback references.
