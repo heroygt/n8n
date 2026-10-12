@@ -13,7 +13,7 @@
 - Publish code to GitHub's `my-server` branch first. The server must fetch that branch before building. Do not use bundles for later source delivery.
 - Update the existing `n8n-custom` and `n8n-runner-custom` default `latest` tags. Versioned candidate tags are intermediate acceptance artifacts, not the final delivery names. Preserve rollback image references before updating the default tags.
 - Verify the image version and native modules before marking the task complete.
-- This request authorizes image builds. A running-service rollout is a separate step.
+- Original scope: image builds only. Superseded by the noam02 rollout authorization below.
 
 ### Acceptance criteria
 
@@ -32,3 +32,11 @@
 - 2026-10-12: The user confirmed that the final images must be built on `noam02`. Local compilation alone does not complete the task.
 - 2026-10-12: The user requires GitHub `my-server` as the source transfer path. Align the server checkout with `origin/my-server` before continuing.
 - 2026-10-12: The user clarified that their custom images use the default tag, without release version tags. Publish the accepted images under the existing `latest` names.
+
+## 2026-10-12: Deploy on noam02 before considering noam88
+
+- Upgrade the running n8n main, worker, and both runner services on noam02 to the accepted custom default images.
+- Inspect the active Compose topology and persistent storage first. Preserve deployment configuration and a database backup before migrations.
+- Verify version, database readiness, main/worker health, runner connectivity, and the existing frontend route after deployment.
+- Record the result and rollback references. Ask the user to confirm the noam02 result after these checks pass.
+- Do not upgrade noam88 until the user confirms noam02 and explicitly decides to proceed there.

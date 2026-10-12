@@ -23,3 +23,13 @@
 - `--push` publishes both accepted images. Use `--stage promote --verified-report FILE --tag latest --push` to update the existing custom default tags from a successful acceptance report. The script verifies candidate image IDs and saves local rollback tags before changing either default tag.
 - Read proxy settings from environment variables. The image stage passes them to both Bake targets through a temporary mode-600 JSON override, then removes it. Do not store proxy credentials in command arguments or Dockerfiles.
 - Use `PNPM_CONFIG_STORE_DIR` with pnpm 12. The production preparation script confirms that npm-style config variables are no longer read.
+
+## 2026-10-12: noam02 runtime rollout
+
+- The live stack is managed outside the source checkout: `/data/withPostgresAndWorker/docker-compose.yml`, project `withpostgresandworker`.
+- Upgrade only `n8n`, `n8n-worker`, `runner-main`, and `runner-worker`. Keep the PostgreSQL and Redis containers and volumes in place.
+- Use `scripts/deploy-custom-images.mjs` with an accepted image receipt and explicit Compose, service, backup, and log parameters. It checks source and image IDs before changes.
+- Stop the main process to pause new intake, drain active Redis queue jobs, then stop the worker and runners. Create a private PostgreSQL custom-format dump, n8n storage archive, Redis snapshot, and deployment configuration backup before starting migrations.
+- Start the main and wait for database readiness before starting the worker and runners. Verify exact image IDs, environment preservation, health, launcher registration, workflow/credential counts, and the existing public route.
+- A failure before migrations resumes the original containers. Once migrations start, preserve the database snapshot for a controlled recovery rather than silently restoring live data.
+- noam88 remains outside the authorized rollout scope until the user confirms noam02 and chooses to proceed there.
