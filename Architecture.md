@@ -48,3 +48,4 @@
 - Pull the exact custom image digests accepted on noam02. Fetch deployment scripts through GitHub `my-server`; no build is needed on noam88.
 - Use `scripts/deploy-native-custom-stack.py` for this topology. Pause the Bull queue, stop ingress, drain active jobs, then stop workers/runners. Back up PostgreSQL, scoped queue keys, private configuration, and each writable `.n8n` directory before migrations.
 - These containers have no storage mounts. Recreate containers without starting them, restore their `.n8n` archives, then start main for migrations before the other application services. Verify all worker registrations and reload the retained proxy.
+- Existing workers lack the `N8N_PROXY_HOPS` setting already declared in Compose. Allow this one nonsecret configuration difference when recreating them; retain all sensitive settings. Other configuration differences must be explicitly reviewed.

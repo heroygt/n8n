@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tarfile
 import time
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,6 +28,7 @@ def main():
     parser.add_argument('--version', default='2.42.7')
     parser.add_argument('--stage', choices=['preflight', 'all'], default='preflight')
     parser.add_argument('--timeout', type=int, default=180)
+    parser.add_argument('--allow-config-change', action='append', default=[])
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     logs = Path(args.log_dir).resolve()
@@ -124,10 +126,15 @@ def main():
         ingress = [s for s in n8n_services if s not in workers]
         assert args.main in ingress and workers and runners
         previous = containers()
+        summary['configuredEnvironmentChanges'] = {}
         for s in apps:
             assert previous[s]['State']['Running']
             expected_env, actual_env = cfg['services'][s]['environment'], envmap(previous[s])
-            assert all(actual_env.get(k) == str(v) for k, v in expected_env.items())
+            changed = [k for k, v in expected_env.items() if actual_env.get(k) != str(v)]
+            assert all(k in args.allow_config_change for k in changed), f'{s}: configured keys differ: {changed}'
+            assert not any('PASSWORD' in k or 'TOKEN' in k or 'ENCRYPTION_KEY' in k for k in changed)
+            if changed:
+                summary['configuredEnvironmentChanges'][s] = changed
         e = envmap(previous[args.main])
         assert e['DB_TYPE'] == 'postgresdb' and e['EXECUTIONS_MODE'] == 'queue'
         dns = 'require("node:dns").lookup(process.env.DB_POSTGRESDB_HOST,(e,a)=>{if(e)throw e;console.log(a)})'
@@ -246,8 +253,9 @@ def main():
         summary.update(after=brief(current), ok=True, queuePaused=paused)
         print('SUCCESS native queue stack deployment', flush=True)
     except Exception as error:
-        summary['error'] = str(error)
-        print('FAILURE ' + str(error), flush=True)
+        frame = traceback.extract_tb(error.__traceback__)[-1]
+        summary['error'] = str(error) or f'{type(error).__name__} at {frame.name}:{frame.lineno}'
+        print('FAILURE ' + summary['error'], flush=True)
         if not schema_started and (stopped or paused):
             try:
                 step('resume-original-services', ['docker', 'start'] + [previous[s]['Id'] for s in apps])
