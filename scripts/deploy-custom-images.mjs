@@ -380,6 +380,9 @@ try {
 	}
 
 	if (values.stage !== 'preflight') {
+		await waitFor('main database readiness', () =>
+			ready(containers()[values.main], 5678, '/healthz/readiness'),
+		);
 		await waitFor('worker database and Redis readiness', () =>
 			ready(containers()[values.worker], 5678, '/healthz/readiness'),
 		);
@@ -410,7 +413,16 @@ try {
 			assert.equal(current[service].Id, previous[service].Id, `${service} must not be recreated`);
 			assert.equal(current[service].State.Health.Status, 'healthy');
 		}
-		for (const service of [values.main, values.worker]) {
+		const mainEnv = envMap(current[values.main]);
+		summary.mainBrokerRequired = !(
+			mainEnv.EXECUTIONS_MODE === 'queue' && mainEnv.OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS === 'true'
+		);
+		const brokerServices = summary.mainBrokerRequired
+			? [values.main, values.worker]
+			: [values.worker];
+		if (!summary.mainBrokerRequired)
+			console.log('PASS main execution offloading; worker broker handles tasks');
+		for (const service of brokerServices) {
 			await waitFor(`${service} JS and Python launcher registration`, () => {
 				const r = spawnSync(
 					'docker',

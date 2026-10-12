@@ -31,5 +31,6 @@
 - Use `scripts/deploy-custom-images.mjs` with an accepted image receipt and explicit Compose, service, backup, and log parameters. It checks source and image IDs before changes.
 - Stop the main process to pause new intake, drain active Redis queue jobs, then stop the worker and runners. Create a private PostgreSQL custom-format dump, n8n storage archive, Redis snapshot, and deployment configuration backup before starting migrations.
 - Start the main and wait for database readiness before starting the worker and runners. Verify exact image IDs, environment preservation, health, launcher registration, workflow/credential counts, and the existing public route.
+- With queue mode and `OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=true`, 2.42.6 does not start a main task broker. Require JS and Python registration on the worker; the retained main runner waits idle. Check both launcher health endpoints.
 - A failure before migrations resumes the original containers. Once migrations start, preserve the database snapshot for a controlled recovery rather than silently restoring live data.
 - noam88 remains outside the authorized rollout scope until the user confirms noam02 and chooses to proceed there.
