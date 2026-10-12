@@ -21,4 +21,14 @@ Validation details belong in `outputs/n8n-upgrade-2.42.6.md`. Detailed logs belo
 - Main, worker, and both runners were recreated using the accepted 2.42.6 custom images. PostgreSQL and Redis retained their container IDs and volumes.
 - Readiness, both launcher health endpoints, worker JS/Python registration, and the public route passed. Workflows/active workflows/credentials remain 232/125/33; migrations are now 288.
 - Queue mode offloads manual execution to the worker, so the main broker is intentionally absent. A real worker execution completed after rollout.
-- The user subsequently authorized the immediate 2.42.7 patch upgrade; this is now the active target.
+- The user subsequently authorized the immediate 2.42.7 patch upgrade, completed below.
+
+## 2026-10-12: Current noam02 version 2.42.7
+
+Status: deployed and verified; awaiting user review.
+
+- Main/worker now run custom `latest` image `80e7c25cb4bc`; both runners use `b7681852f9ab`. The original seven customizations remain.
+- Source was delivered through GitHub `my-server`, built on noam02, accepted with quick image smoke checks, and published under the existing default tags.
+- All four application services are running with zero restarts. Main/worker readiness, both launcher health endpoints, worker JS/Python registration, and the public route passed.
+- Workflows/active workflows/credentials/migrations remain 232/125/33/288. Sensitive settings and the PostgreSQL/Redis containers are preserved. Private backups and 2.42.6 rollback image references are retained.
+- Comprehensive tests were not repeated, as requested. noam88 remains unchanged.

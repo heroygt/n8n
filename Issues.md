@@ -14,3 +14,8 @@
 - The final build uses that proxy for source fetches, dependencies, and Docker build steps. Registry traffic bypasses it.
 - Docker native compilation now uses the matching headers already in the pinned builder image.
 - The final build, application readiness, native acceptance, and registry publication passed.
+
+## 2026-10-12: main runner registration check — resolved
+
+- The first 2.42.6 rollout check incorrectly required JS/Python registration on both main and worker. Queue mode with manual execution offloading intentionally disables the main broker.
+- The reusable deployment helper now verifies registration only where the broker is required and still checks both launcher health endpoints. Read-only 2.42.6 verification and the subsequent 2.42.7 rollout passed.

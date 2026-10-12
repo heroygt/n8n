@@ -52,3 +52,9 @@
 - Rebuild and publish the existing custom default images on noam02, then restart its main, worker, and runner services.
 - The user explicitly requests a simpler patch upgrade: do not repeat comprehensive tests. Use source/version checks, the required build, image smoke checks, and runtime readiness verification.
 - Preserve rollback images and a private pre-restart backup. Continue to leave noam88 unchanged until separately authorized.
+
+### Completion
+
+- 2026-10-12: 2.42.7 code was pushed to GitHub `my-server` and fetched on noam02 before building. Both accepted custom defaults were published, and all four application services restarted successfully.
+- Main/worker readiness, launcher health, worker JS/Python registration, and public HTTP 200 passed. Counts remain 232 workflows, 125 active workflows, 33 credentials, and 288 migrations. No comprehensive tests were repeated.
+- Backup and rollback references are recorded in `outputs/n8n-upgrade-2.42.7.md` and the sanitized deployment receipt. User review of noam02 remains pending; noam88 is unchanged.
