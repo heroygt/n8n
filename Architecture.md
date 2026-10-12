@@ -40,3 +40,11 @@
 - Merge official `n8n@2.42.7` (`92e4ff858a6ec0dc3ce3995d8696861575698bd0`) into `my-server`. This tag descends directly from 2.42.6; none of its changes overlap the seven custom files.
 - Reuse the established server build, image promotion, and deployment scripts with version/log parameters. Keep Node/pnpm, proxy, store, and build cache from the accepted 2.42.6 pipeline.
 - Per user instruction, omit comprehensive tests; source fidelity, build completion, quick image smoke checks, and live readiness are the acceptance gates.
+
+## 2026-10-12: noam88 native queue stack
+
+- Authorization now includes noam88. Compose project `n8n-docker` at `/data/n8n-docker/docker-compose.yml` contains one main, two webhook processors, eight workers, nine runners, and an nginx proxy.
+- PostgreSQL and Redis run natively on noam88; containers connect through `host.docker.internal` (`172.17.0.1`). The queue uses Redis database 15. Preserve these services and the proxy container.
+- Pull the exact custom image digests accepted on noam02. Fetch deployment scripts through GitHub `my-server`; no build is needed on noam88.
+- Use `scripts/deploy-native-custom-stack.py` for this topology. Pause the Bull queue, stop ingress, drain active jobs, then stop workers/runners. Back up PostgreSQL, scoped queue keys, private configuration, and each writable `.n8n` directory before migrations.
+- These containers have no storage mounts. Recreate containers without starting them, restore their `.n8n` archives, then start main for migrations before the other application services. Verify all worker registrations and reload the retained proxy.

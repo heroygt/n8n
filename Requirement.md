@@ -58,3 +58,10 @@
 - 2026-10-12: 2.42.7 code was pushed to GitHub `my-server` and fetched on noam02 before building. Both accepted custom defaults were published, and all four application services restarted successfully.
 - Main/worker readiness, launcher health, worker JS/Python registration, and public HTTP 200 passed. Counts remain 232 workflows, 125 active workflows, 33 credentials, and 288 migrations. No comprehensive tests were repeated.
 - Backup and rollback references are recorded in `outputs/n8n-upgrade-2.42.7.md` and the sanitized deployment receipt. User review of noam02 remains pending; noam88 is unchanged.
+
+## 2026-10-12: Authorized noam88 rollout
+
+- The user now explicitly authorizes upgrading noam88 to the accepted 2.42.7 custom images. This supersedes the earlier noam88 hold.
+- Pull the exact image digests built and published on noam02. Preserve default image names and deliver deployment code through GitHub `my-server`.
+- Upgrade its main, two webhook processors, eight workers, and nine runners; retain native PostgreSQL/Redis and the proxy configuration.
+- Preserve a private database/configuration backup, the writable `.n8n` directories, queue state, and rollback images before migrations. Verify versions, readiness, worker runner registration, and the existing proxy route; do not repeat comprehensive tests.
