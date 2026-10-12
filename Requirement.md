@@ -10,6 +10,7 @@
 - Run the version and source checks before the upgrade. Confirm they fail. Run them again after the upgrade.
 - Install dependencies from the official lockfile. Run the build, existing focused tests, package lint, and typecheck. Record each failure.
 - Build the final custom n8n and runner images on `noam02`. Use the server's existing image naming and build conventions.
+- Publish code to GitHub's `my-server` branch first. The server must fetch that branch before building. Do not use bundles for later source delivery.
 - Verify the image version and native modules before marking the task complete.
 - This request authorizes image builds. A running-service rollout is a separate step.
 
@@ -24,3 +25,4 @@
 ### Scope clarification
 
 - 2026-10-12: The user confirmed that the final images must be built on `noam02`. Local compilation alone does not complete the task.
+- 2026-10-12: The user requires GitHub `my-server` as the source transfer path. Align the server checkout with `origin/my-server` before continuing.

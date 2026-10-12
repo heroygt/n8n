@@ -14,6 +14,7 @@ const { values } = parseArgs({
 		tag: { type: 'string', default: pkg.version },
 		version: { type: 'string', default: pkg.version },
 		stage: { type: 'string', default: 'all' },
+		'source-ref': { type: 'string', default: 'origin/my-server' },
 		builder: { type: 'string' },
 		platform: { type: 'string', default: 'linux/amd64' },
 		store: { type: 'string' },
@@ -28,10 +29,10 @@ if (
 	values.help ||
 	!values.image ||
 	!values['runners-image'] ||
-	!['all', ...stages].includes(values.stage)
+	!['all', 'source', ...stages].includes(values.stage)
 ) {
 	console.log(
-		'Usage: node scripts/build-custom-images.mjs --image REPOSITORY --runners-image REPOSITORY [--tag TAG] [--version VERSION] [--stage all|install|build|prepare|images|verify] [--builder NAME] [--platform PLATFORM] [--store DIR] [--log-dir DIR] [--concurrency NUMBER] [--memory MB]',
+		'Usage: node scripts/build-custom-images.mjs --image REPOSITORY --runners-image REPOSITORY [--tag TAG] [--version VERSION] [--stage all|source|install|build|prepare|images|verify] [--source-ref REF] [--builder NAME] [--platform PLATFORM] [--store DIR] [--log-dir DIR] [--concurrency NUMBER] [--memory MB]',
 	);
 	process.exit(values.help ? 0 : 2);
 }
@@ -57,6 +58,7 @@ const summary = {
 	images,
 	platform: values.platform,
 	sourceCommit: capture('git', ['rev-parse', 'HEAD']),
+	sourceRef: values['source-ref'],
 	steps: [],
 };
 const save = () =>
@@ -140,6 +142,46 @@ async function verify() {
 		capture('docker', [...dockerRun, '--entrypoint', 'pnpm', images[1], '--version']),
 		pkg.packageManager.replace('pnpm@', ''),
 	);
+	const config = readFileSync(resolve(root, 'docker/images/runners/n8n-task-runners.json'), 'utf8');
+	assert.equal(
+		capture('docker', [
+			...dockerRun,
+			'--entrypoint',
+			'/usr/local/bin/node',
+			images[1],
+			'-e',
+			"process.stdout.write(require('node:fs').readFileSync('/etc/n8n-task-runners.json', 'utf8'))",
+		]),
+		config.trim(),
+		'runner configuration must match the custom source file',
+	);
+
+	const container = `n8n-upgrade-smoke-${process.pid}`;
+	const readiness = `const {setTimeout: delay} = require('node:timers/promises'); (async () => { for (let attempt = 0; attempt < 60; attempt++) { try { const response = await fetch('http://127.0.0.1:5678/healthz/readiness', {signal: AbortSignal.timeout(1000)}); if (response.ok) { console.log('PASS application startup and database readiness'); return; } } catch {} await delay(1000); } throw new Error('application did not become ready within 60 attempts'); })().catch(error => {console.error(error); process.exitCode = 1;});`;
+	capture('docker', [
+		'run',
+		'--detach',
+		'--pull=never',
+		'--network=none',
+		'--name',
+		container,
+		'--env',
+		'N8N_DIAGNOSTICS_ENABLED=false',
+		'--env',
+		'N8N_VERSION_NOTIFICATIONS_ENABLED=false',
+		'--env',
+		'N8N_TEMPLATES_ENABLED=false',
+		images[0],
+	]);
+	try {
+		await run('verify-startup', 'docker', ['exec', container, 'node', '-e', readiness]);
+	} finally {
+		try {
+			await run('verify-startup-log', 'docker', ['logs', container]);
+		} finally {
+			capture('docker', ['rm', '--force', container]);
+		}
+	}
 	summary.artifacts = images.map((image) => {
 		const [info] = JSON.parse(capture('docker', ['image', 'inspect', image]));
 		assert.equal(info.Architecture, values.platform.split('/')[1]);
@@ -149,6 +191,18 @@ async function verify() {
 }
 
 try {
+	assert.equal(
+		summary.sourceCommit,
+		capture('git', ['rev-parse', `${values['source-ref']}^{commit}`]),
+		'fetch and fast-forward the GitHub source branch before building',
+	);
+	assert.equal(
+		capture('git', ['status', '--porcelain', '--untracked-files=no']),
+		'',
+		'commit and push tracked changes before building',
+	);
+	summary.sourceVerified = true;
+	console.log(`PASS source matches ${values['source-ref']} with a clean tracked checkout`);
 	for (const stage of values.stage === 'all' ? stages : [values.stage]) {
 		if (stage === 'install')
 			await run(stage, 'pnpm', [
@@ -191,7 +245,7 @@ try {
 		if (stage === 'verify') await verify();
 	}
 	summary.ok = true;
-	console.log('SUCCESS custom image build');
+	console.log(`SUCCESS ${values.stage === 'all' ? 'custom image build' : `${values.stage} stage`}`);
 } catch (error) {
 	summary.error = error.message;
 	console.error(`FAILURE ${error.message}`);

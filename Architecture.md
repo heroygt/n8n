@@ -12,7 +12,10 @@
 - Use `--ported` only for reviewed Docker adaptations. Other changed local files must retain the original patch, or match the original file exactly.
 - Use `scripts/check-redis-pipeline.mjs` with an isolated Redis port to check the built node against a real server. It removes only keys under its unique test prefix.
 - Build the final Linux images on `noam02`. Read its checkout state and build conventions before changing that checkout.
+- Deliver code through GitHub `my-server`: push locally, fetch on `noam02`, and fast-forward to `origin/my-server`. Verify identical commit IDs before each build.
 - Preserve existing image IDs before replacing a custom tag. Verify the new images before any service rollout.
 - Use `scripts/build-custom-images.mjs` for the server pipeline. It accepts image names, tags, stages, platform, package store, and resource limits as arguments. It writes logs and `summary.json` after each stage.
+- The pipeline checks that `HEAD` matches `--source-ref` (default `origin/my-server`) and rejects tracked local changes. `--stage source` runs this check without building images.
+- Image acceptance checks the n8n version, native modules, runner interpreters, pnpm version, and custom runner configuration. It also starts a temporary network-isolated n8n container and checks database readiness before removing it.
 - Compile the workspace with two concurrent tasks. Reuse that cache for production preparation. Limit isolated-vm native compilation to four jobs by default with `N8N_NATIVE_BUILD_JOBS`.
 - Use `PNPM_CONFIG_STORE_DIR` with pnpm 12. The production preparation script confirms that npm-style config variables are no longer read.

@@ -12,3 +12,4 @@
 - Node installers do not automatically use macOS proxy settings. Pass the configured proxy through `HTTP_PROXY` and `HTTPS_PROXY` when GitHub downloads fail.
 - A failed ripgrep installer can leave an empty `bin/` directory. A retry can skip the download because that directory exists. Verify the binary and the official archive digest before the retry.
 - The user expects final custom n8n images to be built on `noam02`. A local source upgrade and local build are intermediate checks.
+- The user requires source transfer through GitHub's `my-server` branch. Push changes before pulling them on `noam02`; do not substitute Git bundles.
