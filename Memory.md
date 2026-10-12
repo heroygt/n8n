@@ -13,5 +13,6 @@
 - A failed ripgrep installer can leave an empty `bin/` directory. A retry can skip the download because that directory exists. Verify the binary and the official archive digest before the retry.
 - The user expects final custom n8n images to be built on `noam02`. A local source upgrade and local build are intermediate checks.
 - The user requires source transfer through GitHub's `my-server` branch. Push changes before pulling them on `noam02`; do not substitute Git bundles.
-- On noam02, GitHub fetch succeeds with Git protocol 0, HTTP/1.1, and the credential helper cleared for this public repository. Run detached Git operations under `setsid` so closing the JumpServer PTY cannot interrupt them.
+- Initial direct Git fetch failures on noam02 were temporarily handled with protocol 0 and HTTP/1.1. The existing server build history shows that outbound operations should use its HTTP proxy instead. Run detached Git operations under `setsid` so closing the JumpServer PTY cannot interrupt them.
 - The pinned Alpine Node builder includes its headers under `/usr/local/include/node`. Point node-gyp at `/usr/local` when a separate header download stalls.
+- noam02 build history uses `http://10.110.63.114:8080`. Export both uppercase and lowercase HTTP/HTTPS proxy variables for Git and dependency installs. Pass them into Docker build steps too. Exclude localhost and internal registry hosts with `NO_PROXY` and `no_proxy`.

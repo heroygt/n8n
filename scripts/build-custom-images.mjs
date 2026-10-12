@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -234,15 +234,34 @@ try {
 			);
 			const driver = capture('docker', ['buildx', 'inspect']).match(/Driver:\s+(\S+)/)?.[1];
 			const flags = driver === 'docker' ? [] : ['--load', '--provenance=false'];
-			await run(stage, 'docker', [
-				'buildx',
-				'bake',
-				'-f',
-				'docker/docker-bake.hcl',
-				'n8n',
-				'runners',
-				...flags,
-			]);
+			const proxyKeys = [
+				'HTTP_PROXY',
+				'HTTPS_PROXY',
+				'http_proxy',
+				'https_proxy',
+				'NO_PROXY',
+				'no_proxy',
+				'ALL_PROXY',
+				'all_proxy',
+			];
+			const proxyArgs = Object.fromEntries(
+				proxyKeys.filter((key) => env[key]).map((key) => [key, env[key]]),
+			);
+			const proxyFile = resolve(logDir, 'bake-proxy.json');
+			const files = ['-f', 'docker/docker-bake.hcl'];
+			if (Object.keys(proxyArgs).length > 0) {
+				writeFileSync(
+					proxyFile,
+					JSON.stringify({ target: { n8n: { args: proxyArgs }, runners: { args: proxyArgs } } }),
+					{ mode: 0o600 },
+				);
+				files.push('-f', proxyFile);
+			}
+			try {
+				await run(stage, 'docker', ['buildx', 'bake', ...files, 'n8n', 'runners', ...flags]);
+			} finally {
+				if (files.length > 2) unlinkSync(proxyFile);
+			}
 		}
 		if (stage === 'verify') await verify();
 	}
