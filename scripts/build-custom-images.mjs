@@ -15,6 +15,7 @@ const { values } = parseArgs({
 		version: { type: 'string', default: pkg.version },
 		stage: { type: 'string', default: 'all' },
 		'source-ref': { type: 'string', default: 'origin/my-server' },
+		push: { type: 'boolean', default: false },
 		builder: { type: 'string' },
 		platform: { type: 'string', default: 'linux/amd64' },
 		store: { type: 'string' },
@@ -29,10 +30,11 @@ if (
 	values.help ||
 	!values.image ||
 	!values['runners-image'] ||
-	!['all', 'source', ...stages].includes(values.stage)
+	!['all', 'source', ...stages].includes(values.stage) ||
+	(values.push && !['all', 'verify'].includes(values.stage))
 ) {
 	console.log(
-		'Usage: node scripts/build-custom-images.mjs --image REPOSITORY --runners-image REPOSITORY [--tag TAG] [--version VERSION] [--stage all|source|install|build|prepare|images|verify] [--source-ref REF] [--builder NAME] [--platform PLATFORM] [--store DIR] [--log-dir DIR] [--concurrency NUMBER] [--memory MB]',
+		'Usage: node scripts/build-custom-images.mjs --image REPOSITORY --runners-image REPOSITORY [--tag TAG] [--version VERSION] [--stage all|source|install|build|prepare|images|verify] [--source-ref REF] [--push (all or verify stages)] [--builder NAME] [--platform PLATFORM] [--store DIR] [--log-dir DIR] [--concurrency NUMBER] [--memory MB]',
 	);
 	process.exit(values.help ? 0 : 2);
 }
@@ -243,6 +245,15 @@ try {
 			]);
 		}
 		if (stage === 'verify') await verify();
+	}
+	if (values.push) {
+		for (const [index, image] of images.entries()) {
+			await run(`publish-${index === 0 ? 'n8n' : 'runners'}`, 'docker', ['push', image]);
+			const [info] = JSON.parse(capture('docker', ['image', 'inspect', image]));
+			assert.equal(info.Id, summary.artifacts[index].id);
+			assert.ok(info.RepoDigests.length > 0, 'published image must have a registry digest');
+			summary.artifacts[index].digests = info.RepoDigests;
+		}
 	}
 	summary.ok = true;
 	console.log(`SUCCESS ${values.stage === 'all' ? 'custom image build' : `${values.stage} stage`}`);

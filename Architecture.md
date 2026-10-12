@@ -18,4 +18,6 @@
 - The pipeline checks that `HEAD` matches `--source-ref` (default `origin/my-server`) and rejects tracked local changes. `--stage source` runs this check without building images.
 - Image acceptance checks the n8n version, native modules, runner interpreters, pnpm version, and custom runner configuration. It also starts a temporary network-isolated n8n container and checks database readiness before removing it.
 - Compile the workspace with two concurrent tasks. Reuse that cache for production preparation. Limit isolated-vm native compilation to four jobs by default with `N8N_NATIVE_BUILD_JOBS`.
+- Native Docker compilation uses the headers inside the pinned Node builder (`npm_config_nodedir=/usr/local`). This avoids an extra header download and keeps the headers aligned with that exact builder.
+- `--push` publishes both versioned images after acceptance succeeds. It is accepted only with `--stage all` or `--stage verify`; record the returned registry digests.
 - Use `PNPM_CONFIG_STORE_DIR` with pnpm 12. The production preparation script confirms that npm-style config variables are no longer read.

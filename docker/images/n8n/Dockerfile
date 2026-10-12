@@ -9,7 +9,9 @@ ARG RUNTIME_IMAGE=n8nio/base:26.7.0@sha256:33687300c4e94dc00f42ec79ae15082ae0733
 FROM ${BUILDER_IMAGE} AS toolchain
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
     apk add --no-cache python3 make g++
-ENV NODE_GYP=/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js
+# Use the headers already supplied by the pinned builder image.
+ENV NODE_GYP=/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js \
+    npm_config_nodedir=/usr/local
 
 # Compile the native modules above `COPY ./compiled`. An application change
 # then does not start a new compile.
