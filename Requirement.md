@@ -23,6 +23,10 @@
 4. Update the feature, architecture, and issue documents with the result.
 5. Produce verified 2.42.6 custom images on `noam02`. Record their names, image IDs, build path, and rollback references.
 
+### Completion
+
+- 2026-10-12: All acceptance criteria passed. Both existing custom `latest` tags were updated and pushed to the server registry. Final evidence is recorded in `outputs/n8n-upgrade-2.42.6.md` and its JSON receipts.
+
 ### Scope clarification
 
 - 2026-10-12: The user confirmed that the final images must be built on `noam02`. Local compilation alone does not complete the task.
