@@ -7,19 +7,23 @@ ARG RUNTIME_IMAGE=n8nio/base:26.7.0@sha256:33687300c4e94dc00f42ec79ae15082ae0733
 
 # The runtime base has no compiler, so this stage supplies one.
 FROM ${BUILDER_IMAGE} AS toolchain
-RUN apk add --no-cache python3 make g++
-ENV NODE_GYP=/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk add --no-cache python3 make g++
+# Use the headers already supplied by the pinned builder image.
+ENV NODE_GYP=/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js \
+    npm_config_nodedir=/usr/local
 
 # Compile the native modules above `COPY ./compiled`. An application change
 # then does not start a new compile.
 FROM toolchain AS native-builder
+ARG N8N_NATIVE_BUILD_JOBS=4
 
 # These paths are pnpm symlinks. Copying through them uses the resolved version.
 COPY ./compiled/node_modules/.pnpm/isolated-vm@*/node_modules/isolated-vm /build/isolated-vm
 WORKDIR /build/isolated-vm
 # node-gyp-build reads /etc/alpine-release to find musl. DHI Alpine does not
 # have that file, so the loader uses the glibc prebuild and crashes.
-RUN rm -rf prebuilds && node "$NODE_GYP" rebuild --release -j max
+RUN rm -rf prebuilds && node "$NODE_GYP" rebuild --release -j "${N8N_NATIVE_BUILD_JOBS}"
 
 # sqlite3 needs node-addon-api for the headers, and `tar` because a gyp action
 # unpacks the sqlite source. pnpm gives each package its own directory, so the
@@ -49,7 +53,7 @@ RUN BUILD_LIBRDKAFKA=0 node "$NODE_GYP" rebuild --release
 FROM ${RUNTIME_IMAGE}
 
 ARG N8N_VERSION
-ARG N8N_RELEASE_TYPE=dev
+ARG N8N_RELEASE_TYPE=stable
 ARG IMAGE_DESCRIPTION="Workflow Automation Tool"
 ENV NODE_ENV=production
 ENV N8N_RELEASE_TYPE=${N8N_RELEASE_TYPE}
