@@ -1,0 +1,357 @@
+{
+  "ok": true,
+  "version": "2.42.7",
+  "recordedAt": "2026-10-12T09:51:53.341093+00:00",
+  "sourceCommit": "903bc4c341d71f51bea2106db95b87c892a9fbf4",
+  "officialTag": "92e4ff858a6ec0dc3ce3995d8696861575698bd0",
+  "sourceVerified": true,
+  "images": [
+    {
+      "image": "10.132.134.63:5000/n8n-custom:latest",
+      "id": "sha256:80e7c25cb4bcf9860418c01bec4e0a0126053554d7d0a9f956b7843fd4cadbc8",
+      "architecture": "amd64",
+      "size": 1105552797,
+      "previousId": "sha256:74daf4d61991b768f05c3dda2bf7b5030a957b4b5bb719b039cbb64192a87e8c",
+      "rollbackImage": "10.132.134.63:5000/n8n-custom:latest-rollback-20261012094730",
+      "digests": [
+        "10.132.134.63:5000/n8n-custom@sha256:56a710940d1087af56ff93a7ce8785b7da06d8e0fbc6487d95ad84da648b3d0a"
+      ]
+    },
+    {
+      "image": "10.132.134.63:5000/n8n-runner-custom:latest",
+      "id": "sha256:b7681852f9ab6e977e6ee7b643c6e99d09410ac172bf0b2630d54244d7455c52",
+      "architecture": "amd64",
+      "size": 567730964,
+      "previousId": "sha256:b2e721c07379843557e21c193fc0bf9151a695b1704e9a240905c0552fabbd06",
+      "rollbackImage": "10.132.134.63:5000/n8n-runner-custom:latest-rollback-20261012094730",
+      "digests": [
+        "10.132.134.63:5000/n8n-runner-custom@sha256:a7f09b6e632c633f4b7da9927eff76264dc398ea510a5cb3f46c54089620b711"
+      ]
+    }
+  ],
+  "buildSteps": [
+    {
+      "name": "install",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/install.log",
+      "startedAt": "2026-10-12T09:42:46.931Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:43:00.047Z"
+    },
+    {
+      "name": "build",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/build.log",
+      "startedAt": "2026-10-12T09:43:00.048Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:44:56.565Z"
+    },
+    {
+      "name": "prepare",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/prepare.log",
+      "startedAt": "2026-10-12T09:44:56.565Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:45:42.980Z"
+    },
+    {
+      "name": "images",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/images.log",
+      "startedAt": "2026-10-12T09:45:43.792Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:12.803Z"
+    },
+    {
+      "name": "verify-native",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/verify-native.log",
+      "startedAt": "2026-10-12T09:47:13.166Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:13.588Z"
+    },
+    {
+      "name": "verify-kafka",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/verify-kafka.log",
+      "startedAt": "2026-10-12T09:47:13.589Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:13.989Z"
+    },
+    {
+      "name": "verify-runner-node",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/verify-runner-node.log",
+      "startedAt": "2026-10-12T09:47:13.990Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:14.255Z"
+    },
+    {
+      "name": "verify-runner-python",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/verify-runner-python.log",
+      "startedAt": "2026-10-12T09:47:14.255Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:14.533Z"
+    },
+    {
+      "name": "verify-startup",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/verify-startup.log",
+      "startedAt": "2026-10-12T09:47:15.345Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:29.851Z"
+    },
+    {
+      "name": "verify-startup-log",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.7/server-build/verify-startup-log.log",
+      "startedAt": "2026-10-12T09:47:29.852Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T09:47:29.878Z"
+    }
+  ],
+  "deployment": {
+    "ok": true,
+    "version": "2.42.7",
+    "project": "withpostgresandworker",
+    "composeFile": "/data/withPostgresAndWorker/docker-compose.yml",
+    "steps": [
+      {
+        "name": "stop-main",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/stop-main.log",
+        "startedAt": "2026-10-12T09:48:31.633Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:49:04.072Z"
+      },
+      {
+        "name": "stop-worker-runners",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/stop-worker-runners.log",
+        "startedAt": "2026-10-12T09:49:12.666Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:49:44.252Z"
+      },
+      {
+        "name": "backup-postgres",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/backup-postgres.log",
+        "startedAt": "2026-10-12T09:49:44.379Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:08.077Z"
+      },
+      {
+        "name": "check-postgres-archive",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/check-postgres-archive.log",
+        "startedAt": "2026-10-12T09:50:08.077Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:08.197Z"
+      },
+      {
+        "name": "save-redis",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/save-redis.log",
+        "startedAt": "2026-10-12T09:50:08.198Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:08.293Z"
+      },
+      {
+        "name": "backup-n8n-storage",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/backup-n8n-storage.log",
+        "startedAt": "2026-10-12T09:50:08.293Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:11.820Z"
+      },
+      {
+        "name": "backup-redis-storage",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/backup-redis-storage.log",
+        "startedAt": "2026-10-12T09:50:11.820Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:12.106Z"
+      },
+      {
+        "name": "check-n8n-archive",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/check-n8n-archive.log",
+        "startedAt": "2026-10-12T09:50:12.107Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:12.565Z"
+      },
+      {
+        "name": "check-redis-archive",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/check-redis-archive.log",
+        "startedAt": "2026-10-12T09:50:12.566Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:12.573Z"
+      },
+      {
+        "name": "start-main",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/start-main.log",
+        "startedAt": "2026-10-12T09:50:13.083Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:13.557Z"
+      },
+      {
+        "name": "start-worker-runners",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/start-worker-runners.log",
+        "startedAt": "2026-10-12T09:50:23.245Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:24.170Z"
+      },
+      {
+        "name": "public-route",
+        "status": "passed",
+        "log": "/data/n8n/work/n8n-upgrade-2.42.7/deployment/public-route.log",
+        "startedAt": "2026-10-12T09:50:44.303Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-12T09:50:44.408Z"
+      }
+    ],
+    "sourceCommit": "903bc4c341d71f51bea2106db95b87c892a9fbf4",
+    "before": {
+      "n8n": {
+        "container": "/withpostgresandworker-n8n-1",
+        "id": "8bb4c1be88b7a6ea38741106a00e332890c5266c37b463dd6b49e4eb56ba75f9",
+        "imageId": "sha256:74daf4d61991b768f05c3dda2bf7b5030a957b4b5bb719b039cbb64192a87e8c"
+      },
+      "n8n-worker": {
+        "container": "/withpostgresandworker-n8n-worker-1",
+        "id": "957ea56a11871b9587cc835c8a552259c571fc75f1d79a77b33295f3cef3a7ed",
+        "imageId": "sha256:74daf4d61991b768f05c3dda2bf7b5030a957b4b5bb719b039cbb64192a87e8c"
+      },
+      "runner-main": {
+        "container": "/withpostgresandworker-runner-main-1",
+        "id": "d5ba879a2bf11336578b15f4badef7ac1c1d4dff04b09fc8a4125eb4e54ffeb4",
+        "imageId": "sha256:b2e721c07379843557e21c193fc0bf9151a695b1704e9a240905c0552fabbd06"
+      },
+      "runner-worker": {
+        "container": "/withpostgresandworker-runner-worker-1",
+        "id": "05a50b988700ecf2730aab073757eadf82266f7ee08229c109f046c0801b5401",
+        "imageId": "sha256:b2e721c07379843557e21c193fc0bf9151a695b1704e9a240905c0552fabbd06"
+      },
+      "postgres": {
+        "container": "/withpostgresandworker-postgres-1",
+        "id": "e93bf94044da76e5cdaf4f9449774be4e3e2adaf500073e1c283bd3fde42b14a",
+        "imageId": "sha256:eb634efa7ee4668e7bb7a9afa946987699608e5cff79418d39e7c5302f6ea3e8"
+      },
+      "redis": {
+        "container": "/withpostgresandworker-redis-1",
+        "id": "94e4d7b45a5f5d749a2430a0280604709d402e53b8de3bde5ba24bf9a51c0e37",
+        "imageId": "sha256:0e8d64a9df81426ee4c67aa65212f721dfc5829d2e577a3bc6f26ae1f740fd85"
+      }
+    },
+    "beforeDatabase": {
+      "database": "n8n",
+      "bytes": 534843875,
+      "workflows": 232,
+      "activeWorkflows": 125,
+      "credentials": 33,
+      "migrations": 288
+    },
+    "beforeActiveJobs": 1,
+    "acceptedImageSource": "903bc4c341d71f51bea2106db95b87c892a9fbf4",
+    "backupDir": "/data/withPostgresAndWorker/upgrade-backups/n8n-2.42.7-20261012094831",
+    "maintenance": false,
+    "backups": [
+      {
+        "file": "/data/withPostgresAndWorker/upgrade-backups/n8n-2.42.7-20261012094831/postgres.dump",
+        "bytes": 154566303,
+        "sha256": "28a8a4146e0581763d7d00b617f4f231edad0663c0f416f839ba14f2374d23cb"
+      },
+      {
+        "file": "/data/withPostgresAndWorker/upgrade-backups/n8n-2.42.7-20261012094831/n8n-storage.tar.gz",
+        "bytes": 15482060,
+        "sha256": "157f071e6d79dfe718853e8447fcc30096226b389669b49bd81333239542bbd5"
+      },
+      {
+        "file": "/data/withPostgresAndWorker/upgrade-backups/n8n-2.42.7-20261012094831/redis-storage.tar.gz",
+        "bytes": 356189,
+        "sha256": "3662ef0eaf66f1fa2c3af8f2fa3509dd664c0d7856e5a09a182f3bcc54da0dcb"
+      }
+    ],
+    "mainBrokerRequired": false,
+    "afterDatabase": {
+      "database": "n8n",
+      "bytes": 534852067,
+      "workflows": 232,
+      "activeWorkflows": 125,
+      "credentials": 33,
+      "migrations": 288
+    },
+    "after": {
+      "n8n": {
+        "container": "/withpostgresandworker-n8n-1",
+        "id": "717449a81ea299c1c19def6e454f61ee7d23b62aa66d71c0bf27ee4afe99d0d7",
+        "imageId": "sha256:80e7c25cb4bcf9860418c01bec4e0a0126053554d7d0a9f956b7843fd4cadbc8",
+        "restartCount": 0
+      },
+      "n8n-worker": {
+        "container": "/withpostgresandworker-n8n-worker-1",
+        "id": "5ede1d368329b29106eb176faa6d76da208ccca621a2da4f06b8996b5722e879",
+        "imageId": "sha256:80e7c25cb4bcf9860418c01bec4e0a0126053554d7d0a9f956b7843fd4cadbc8",
+        "restartCount": 0
+      },
+      "runner-main": {
+        "container": "/withpostgresandworker-runner-main-1",
+        "id": "c9297efb838e1b478623dbceda71d68d9f74845d40742dd9960612ab4cce3e00",
+        "imageId": "sha256:b7681852f9ab6e977e6ee7b643c6e99d09410ac172bf0b2630d54244d7455c52",
+        "restartCount": 0
+      },
+      "runner-worker": {
+        "container": "/withpostgresandworker-runner-worker-1",
+        "id": "cbe392b44d29dfd5052d62474f5a0a5037696dc19317f641582f9d1a65b7fa94",
+        "imageId": "sha256:b7681852f9ab6e977e6ee7b643c6e99d09410ac172bf0b2630d54244d7455c52",
+        "restartCount": 0
+      },
+      "postgres": {
+        "container": "/withpostgresandworker-postgres-1",
+        "id": "e93bf94044da76e5cdaf4f9449774be4e3e2adaf500073e1c283bd3fde42b14a",
+        "imageId": "sha256:eb634efa7ee4668e7bb7a9afa946987699608e5cff79418d39e7c5302f6ea3e8",
+        "restartCount": 0
+      },
+      "redis": {
+        "container": "/withpostgresandworker-redis-1",
+        "id": "94e4d7b45a5f5d749a2430a0280604709d402e53b8de3bde5ba24bf9a51c0e37",
+        "imageId": "sha256:0e8d64a9df81426ee4c67aa65212f721dfc5829d2e577a3bc6f26ae1f740fd85",
+        "restartCount": 0
+      }
+    }
+  },
+  "currentServices": {
+    "n8n": {
+      "running": true,
+      "restartCount": 0,
+      "sensitiveSettingsPreserved": true
+    },
+    "n8n-worker": {
+      "running": true,
+      "restartCount": 0,
+      "sensitiveSettingsPreserved": true
+    },
+    "runner-main": {
+      "running": true,
+      "restartCount": 0,
+      "sensitiveSettingsPreserved": true
+    },
+    "runner-worker": {
+      "running": true,
+      "restartCount": 0,
+      "sensitiveSettingsPreserved": true
+    }
+  },
+  "publicUrl": "https://noam-n8n.nioint.com",
+  "publicHttpStatus": "200",
+  "storageServicesPreserved": {
+    "postgres": true,
+    "redis": true
+  },
+  "comprehensiveTestsRepeated": false,
+  "noam88Changed": false
+}

@@ -22,6 +22,36 @@ describe('Redis Node', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		createClient.mockReturnValue(mockClient);
+		mockClient.multi.mockImplementation(() => {
+			const pipeline = mock<ReturnType<RedisClient['multi']>>();
+			const commands: Array<() => Promise<unknown>> = [];
+			pipeline.type.mockImplementation((key) => {
+				commands.push(async () => await mockClient.type(key));
+				return pipeline;
+			});
+			pipeline.get.mockImplementation((key) => {
+				commands.push(async () => await mockClient.get(key));
+				return pipeline;
+			});
+			pipeline.del.mockImplementation((keys) => {
+				commands.push(async () => await mockClient.del(keys));
+				return pipeline;
+			});
+			pipeline.hGetAll.mockImplementation((key) => {
+				commands.push(async () => await mockClient.hGetAll(key));
+				return pipeline;
+			});
+			pipeline.lLen.mockImplementation((key) => {
+				commands.push(async () => await mockClient.lLen(key));
+				return pipeline;
+			});
+			pipeline.exec.mockImplementation(async () => {
+				return (await Promise.all(commands.map(async (command) => await command()))) as Awaited<
+					ReturnType<typeof pipeline.exec>
+				>;
+			});
+			return pipeline;
+		});
 	});
 
 	afterEach(() => vi.resetAllMocks());
@@ -411,11 +441,11 @@ master_failover_state:no-failover
 				thisArg.getInputData.mockReturnValue([{ json: { x: 1 } }]);
 				thisArg.getNodeParameter.calledWith('operation', 0).mockReturnValue('delete');
 				thisArg.getNodeParameter.calledWith('key', 0).mockReturnValue('key1');
-				mockClient.del.calledWith('key1').mockResolvedValue(1);
+				mockClient.del.calledWith(['key1']).mockResolvedValue(1);
 
 				const output = await node.execute.call(thisArg);
-				expect(mockClient.del).toHaveBeenCalledWith('key1');
-				expect(output[0][0].json).toEqual({ x: 1 });
+				expect(mockClient.del).toHaveBeenCalledWith(['key1']);
+				expect(output[0][0].json).toEqual({ deletedKeys: ['key1'], count: 1 });
 			});
 
 			it('should continue and return an error when continue on fail is enabled and an error is thrown', async () => {
@@ -516,14 +546,19 @@ master_failover_state:no-failover
 				thisArg.getInputData.mockReturnValue([{ json: { x: 1 } }]);
 				thisArg.getNodeParameter.calledWith('operation', 0).mockReturnValue('keys');
 				thisArg.getNodeParameter.calledWith('keyPattern', 0).mockReturnValue('key*');
-				mockClient.keys.calledWith('key*').mockResolvedValue(['key1', 'key2']);
+				mockClient.scanIterator.mockImplementation(async function* () {
+					yield 'key1';
+					yield 'key2';
+				});
 			});
 
 			it('getValues = false', async () => {
 				thisArg.getNodeParameter.calledWith('getValues', 0).mockReturnValue(false);
 
 				const output = await node.execute.call(thisArg);
-				expect(mockClient.keys).toHaveBeenCalledWith('key*');
+				expect(mockClient.scanIterator).toHaveBeenCalledWith(
+					expect.objectContaining({ MATCH: 'key*' }),
+				);
 				expect(output[0][0].json).toEqual({ keys: ['key1', 'key2'] });
 			});
 
@@ -534,8 +569,13 @@ master_failover_state:no-failover
 				mockClient.get.calledWith('key2').mockResolvedValue('value2');
 
 				const output = await node.execute.call(thisArg);
-				expect(mockClient.keys).toHaveBeenCalledWith('key*');
-				expect(output[0][0].json).toEqual({ key1: 'value1', key2: 'value2' });
+				expect(mockClient.scanIterator).toHaveBeenCalledWith(
+					expect.objectContaining({ MATCH: 'key*' }),
+				);
+				expect(output[0][0].json).toEqual({
+					keys: ['key1', 'key2'],
+					values: { key1: 'value1', key2: 'value2' },
+				});
 			});
 
 			it('should continue and return an error when continue on fail is enabled and an error is thrown', async () => {
@@ -568,6 +608,18 @@ master_failover_state:no-failover
 					thisArg.getInputData.mockReturnValue([{ json: { x: 1 } }]);
 					thisArg.getNodeParameter.calledWith('operation', 0).mockReturnValue('llen');
 					thisArg.getNodeParameter.calledWith('list', 0).mockReturnValue('bull:main:q');
+				});
+
+				it('returns list lengths in input order', async () => {
+					thisArg.getInputData.mockReturnValue([{ json: {} }, { json: {} }]);
+					thisArg.getNodeParameter.calledWith('list', 0).mockReturnValue('list-a');
+					thisArg.getNodeParameter.calledWith('list', 1).mockReturnValue('list-b');
+					mockClient.lLen.calledWith('list-a').mockResolvedValue(0);
+					mockClient.lLen.calledWith('list-b').mockResolvedValue(42);
+
+					const output = await node.execute.call(thisArg);
+
+					expect(output[0].map((item) => item.json)).toEqual([{ 'list-a': 0 }, { 'list-b': 42 }]);
 				});
 
 				it('should return the length of a list', async () => {

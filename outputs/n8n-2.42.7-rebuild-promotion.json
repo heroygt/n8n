@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "version": "2.42.7",
+  "images": [
+    "10.132.134.63:5000/n8n-custom:latest",
+    "10.132.134.63:5000/n8n-runner-custom:latest"
+  ],
+  "platform": "linux/amd64",
+  "sourceCommit": "d167422aabb0374e915eda825a5b624d389a7621",
+  "sourceRef": "origin/my-server",
+  "steps": [
+    {
+      "name": "backup-0",
+      "status": "passed",
+      "log": "/data/n8n/work/replace-replay-20261013/promotion/backup-0.log",
+      "startedAt": "2026-10-13T06:21:36.265Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-13T06:21:36.290Z"
+    },
+    {
+      "name": "promote-0",
+      "status": "passed",
+      "log": "/data/n8n/work/replace-replay-20261013/promotion/promote-0.log",
+      "startedAt": "2026-10-13T06:21:36.290Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-13T06:21:36.314Z"
+    },
+    {
+      "name": "backup-1",
+      "status": "passed",
+      "log": "/data/n8n/work/replace-replay-20261013/promotion/backup-1.log",
+      "startedAt": "2026-10-13T06:21:36.314Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-13T06:21:36.337Z"
+    },
+    {
+      "name": "promote-1",
+      "status": "passed",
+      "log": "/data/n8n/work/replace-replay-20261013/promotion/promote-1.log",
+      "startedAt": "2026-10-13T06:21:36.337Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-13T06:21:36.359Z"
+    },
+    {
+      "name": "publish-n8n",
+      "status": "passed",
+      "log": "/data/n8n/work/replace-replay-20261013/promotion/publish-n8n.log",
+      "startedAt": "2026-10-13T06:21:36.360Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-13T06:22:21.202Z"
+    },
+    {
+      "name": "publish-runners",
+      "status": "passed",
+      "log": "/data/n8n/work/replace-replay-20261013/promotion/publish-runners.log",
+      "startedAt": "2026-10-13T06:22:21.222Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-13T06:22:34.747Z"
+    }
+  ],
+  "sourceVerified": true,
+  "verifiedSourceCommit": "d167422aabb0374e915eda825a5b624d389a7621",
+  "artifacts": [
+    {
+      "image": "10.132.134.63:5000/n8n-custom:latest",
+      "id": "sha256:0655d4827bfc99edb951c1325fcf1ababf911667c8992d27a8630c432ba10afd",
+      "architecture": "amd64",
+      "size": 1105552797,
+      "previousId": "sha256:80e7c25cb4bcf9860418c01bec4e0a0126053554d7d0a9f956b7843fd4cadbc8",
+      "rollbackImage": "10.132.134.63:5000/n8n-custom:latest-rollback-20261013062136",
+      "digests": [
+        "10.132.134.63:5000/n8n-custom@sha256:22de7913ef5d20fb19a821b1966b1f7fc8ca054899b426ac9d00eedb18833501"
+      ]
+    },
+    {
+      "image": "10.132.134.63:5000/n8n-runner-custom:latest",
+      "id": "sha256:90a9126fb58f21b9f3f1e8e89c9e17666c363135bee6f43f671955b763915d67",
+      "architecture": "amd64",
+      "size": 567730964,
+      "previousId": "sha256:b7681852f9ab6e977e6ee7b643c6e99d09410ac172bf0b2630d54244d7455c52",
+      "rollbackImage": "10.132.134.63:5000/n8n-runner-custom:latest-rollback-20261013062136",
+      "digests": [
+        "10.132.134.63:5000/n8n-runner-custom@sha256:368ec5806dbbf69b5b6be7be26e2a8730982432220d772e3e6488643b3bc57c4"
+      ]
+    }
+  ]
+}

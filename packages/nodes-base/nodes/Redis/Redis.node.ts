@@ -70,6 +70,12 @@ export class Redis implements INodeType {
 						action: 'Return all keys matching a pattern',
 					},
 					{
+						name: 'List Length',
+						value: 'llen',
+						description: 'Returns the length of a list',
+						action: 'Return the length of a list',
+					},
+					{
 						name: 'Mget',
 						value: 'mget',
 						description: 'Get multiple values from Redis',
@@ -398,6 +404,15 @@ export class Redis implements INodeType {
 				default: true,
 				description: 'Whether to get the value of matching keys',
 			},
+			{
+				displayName: 'List',
+				name: 'list',
+				type: 'string',
+				displayOptions: { show: { operation: ['llen'] } },
+				default: '',
+				required: true,
+				description: 'Name of the list in Redis',
+			},
 			// ----------------------------------
 			//         set
 			// ----------------------------------
@@ -650,9 +665,19 @@ export class Redis implements INodeType {
 				}
 			}
 		} else if (
-			['delete', 'get', 'keys', 'set', 'incr', 'publish', 'push', 'pop', 'mget', 'mset'].includes(
-				operation,
-			)
+			[
+				'delete',
+				'get',
+				'keys',
+				'llen',
+				'set',
+				'incr',
+				'publish',
+				'push',
+				'pop',
+				'mget',
+				'mset',
+			].includes(operation)
 		) {
 			const items = this.getInputData();
 
@@ -784,6 +809,16 @@ export class Redis implements INodeType {
 								}
 							}
 						}
+					} else if (operation === 'llen') {
+						const list = this.getNodeParameter('list', itemIndex);
+						if (typeof list !== 'string') {
+							throw new NodeOperationError(
+								this.getNode(),
+								'The list name must be a string. Check the List parameter.',
+							);
+						}
+						pipeline.lLen(list);
+						itemOperation.commandCount = 1;
 					} else if (operation === 'set') {
 						const keySet = this.getNodeParameter('key', itemIndex) as string;
 						const value = this.getNodeParameter('value', itemIndex) as string;
@@ -1058,6 +1093,24 @@ export class Redis implements INodeType {
 						} else if (itemOp.operation === 'set') {
 							returnItems.push(items[itemOp.itemIndex]);
 							resultIndex += itemOp.commandCount;
+						} else if (itemOp.operation === 'llen') {
+							const list = this.getNodeParameter('list', itemOp.itemIndex);
+							if (typeof list !== 'string') {
+								throw new NodeOperationError(
+									this.getNode(),
+									'The list name must be a string. Check the List parameter.',
+								);
+							}
+							const length = results[resultIndex];
+							if (typeof length !== 'number') {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Redis returned an invalid list length. Check the list in Redis.',
+								);
+							}
+							item.json = { [list]: length };
+							returnItems.push(item);
+							resultIndex++;
 						} else if (itemOp.operation === 'incr') {
 							const keyIncr = this.getNodeParameter('key', itemOp.itemIndex) as string;
 							const incrementVal = results[resultIndex];

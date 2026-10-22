@@ -1,0 +1,130 @@
+{
+  "ok": true,
+  "version": "2.42.6",
+  "images": [
+    "10.132.134.63:5000/n8n-custom:2.42.6",
+    "10.132.134.63:5000/n8n-runner-custom:2.42.6"
+  ],
+  "platform": "linux/amd64",
+  "sourceCommit": "7cf85e1c82ac14753480819bf27bc2fc4936df8f",
+  "sourceRef": "origin/my-server",
+  "steps": [
+    {
+      "name": "install",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/install.log",
+      "startedAt": "2026-10-12T08:29:14.480Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:29:15.578Z"
+    },
+    {
+      "name": "build",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/build.log",
+      "startedAt": "2026-10-12T08:29:15.578Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:29:17.387Z"
+    },
+    {
+      "name": "prepare",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/prepare.log",
+      "startedAt": "2026-10-12T08:29:17.388Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:29:55.425Z"
+    },
+    {
+      "name": "images",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/images.log",
+      "startedAt": "2026-10-12T08:29:55.783Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:33:50.399Z"
+    },
+    {
+      "name": "verify-native",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/verify-native.log",
+      "startedAt": "2026-10-12T08:33:50.836Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:33:51.319Z"
+    },
+    {
+      "name": "verify-kafka",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/verify-kafka.log",
+      "startedAt": "2026-10-12T08:33:51.319Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:33:51.708Z"
+    },
+    {
+      "name": "verify-runner-node",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/verify-runner-node.log",
+      "startedAt": "2026-10-12T08:33:51.709Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:33:52.139Z"
+    },
+    {
+      "name": "verify-runner-python",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/verify-runner-python.log",
+      "startedAt": "2026-10-12T08:33:52.139Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:33:52.389Z"
+    },
+    {
+      "name": "verify-startup",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/verify-startup.log",
+      "startedAt": "2026-10-12T08:33:53.829Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:34:08.435Z"
+    },
+    {
+      "name": "verify-startup-log",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/verify-startup-log.log",
+      "startedAt": "2026-10-12T08:34:08.436Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:34:08.456Z"
+    },
+    {
+      "name": "publish-n8n",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/publish-n8n.log",
+      "startedAt": "2026-10-12T08:34:08.721Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:34:53.358Z"
+    },
+    {
+      "name": "publish-runners",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-final/publish-runners.log",
+      "startedAt": "2026-10-12T08:34:53.375Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:35:06.884Z"
+    }
+  ],
+  "sourceVerified": true,
+  "artifacts": [
+    {
+      "image": "10.132.134.63:5000/n8n-custom:2.42.6",
+      "id": "sha256:74daf4d61991b768f05c3dda2bf7b5030a957b4b5bb719b039cbb64192a87e8c",
+      "architecture": "amd64",
+      "size": 1105233487,
+      "digests": [
+        "10.132.134.63:5000/n8n-custom@sha256:d615e1fa692906df4e355d0f6ee58d5ce2d650df123928ea2cead8e432d535ee"
+      ]
+    },
+    {
+      "image": "10.132.134.63:5000/n8n-runner-custom:2.42.6",
+      "id": "sha256:b2e721c07379843557e21c193fc0bf9151a695b1704e9a240905c0552fabbd06",
+      "architecture": "amd64",
+      "size": 567629895,
+      "digests": [
+        "10.132.134.63:5000/n8n-runner-custom@sha256:0d4eea0aa793e7d3e530fca7985504f52c860d5a7afb3bd8852df723c3930ee6"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,570 @@
+{
+  "date": "2026-10-13",
+  "server": "noam02",
+  "purpose": "Rebuild the cherry-picked GitHub my-server source and compare with the previous accepted custom 2.42.7 images",
+  "conclusion": {
+    "byteIdentical": false,
+    "runtimeContentEquivalent": true,
+    "reason": "All differing file content is build/pnpm timing metadata or package.json dependency key order. Application code, binaries, dependencies, permissions, symlinks and image Config match.",
+    "scope": "All exported filesystem entries; excludes Docker-injected hosts/hostname/resolv.conf/.dockerenv and treats mtimes separately. Quick acceptance only; no throughput or comprehensive suite claim."
+  },
+  "buildReceipt": {
+    "ok": true,
+    "version": "2.42.7",
+    "images": [
+      "10.132.134.63:5000/n8n-custom:replay-check-20261013",
+      "10.132.134.63:5000/n8n-runner-custom:replay-check-20261013"
+    ],
+    "platform": "linux/amd64",
+    "sourceCommit": "d167422aabb0374e915eda825a5b624d389a7621",
+    "sourceRef": "origin/my-server",
+    "steps": [
+      {
+        "name": "install",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/install.log",
+        "startedAt": "2026-10-13T06:05:08.026Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:05:09.806Z"
+      },
+      {
+        "name": "build",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/build.log",
+        "startedAt": "2026-10-13T06:05:09.806Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:05:12.089Z"
+      },
+      {
+        "name": "prepare",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/prepare.log",
+        "startedAt": "2026-10-13T06:05:12.089Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:05:51.951Z"
+      },
+      {
+        "name": "images",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/images.log",
+        "startedAt": "2026-10-13T06:05:52.959Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:06:57.667Z"
+      },
+      {
+        "name": "verify-native",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/verify-native.log",
+        "startedAt": "2026-10-13T06:06:58.377Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:06:58.846Z"
+      },
+      {
+        "name": "verify-kafka",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/verify-kafka.log",
+        "startedAt": "2026-10-13T06:06:58.847Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:06:59.303Z"
+      },
+      {
+        "name": "verify-runner-node",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/verify-runner-node.log",
+        "startedAt": "2026-10-13T06:06:59.303Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:06:59.572Z"
+      },
+      {
+        "name": "verify-runner-python",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/verify-runner-python.log",
+        "startedAt": "2026-10-13T06:06:59.574Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:06:59.874Z"
+      },
+      {
+        "name": "verify-startup",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/verify-startup.log",
+        "startedAt": "2026-10-13T06:07:00.897Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:07:15.242Z"
+      },
+      {
+        "name": "verify-startup-log",
+        "status": "passed",
+        "log": "/data/n8n/work/rebuild-compare-20261013/build/verify-startup-log.log",
+        "startedAt": "2026-10-13T06:07:15.243Z",
+        "exitCode": 0,
+        "finishedAt": "2026-10-13T06:07:15.279Z"
+      }
+    ],
+    "sourceVerified": true,
+    "artifacts": [
+      {
+        "image": "10.132.134.63:5000/n8n-custom:replay-check-20261013",
+        "id": "sha256:0655d4827bfc99edb951c1325fcf1ababf911667c8992d27a8630c432ba10afd",
+        "architecture": "amd64",
+        "size": 1105552797
+      },
+      {
+        "image": "10.132.134.63:5000/n8n-runner-custom:replay-check-20261013",
+        "id": "sha256:90a9126fb58f21b9f3f1e8e89c9e17666c363135bee6f43f671955b763915d67",
+        "architecture": "amd64",
+        "size": 567730964
+      }
+    ]
+  },
+  "imageComparison": {
+    "ok": true,
+    "buildSource": "d167422aabb0374e915eda825a5b624d389a7621",
+    "version": "2.42.7",
+    "images": [
+      {
+        "baselineImage": "10.132.134.63:5000/n8n-custom:latest",
+        "baselineId": "sha256:80e7c25cb4bcf9860418c01bec4e0a0126053554d7d0a9f956b7843fd4cadbc8",
+        "candidateImage": "10.132.134.63:5000/n8n-custom:replay-check-20261013",
+        "candidateId": "sha256:0655d4827bfc99edb951c1325fcf1ababf911667c8992d27a8630c432ba10afd",
+        "baselineCreated": "2026-10-12T17:46:36.630167729+08:00",
+        "candidateCreated": "2026-10-13T14:06:41.311843892+08:00",
+        "imageIdEqual": false,
+        "layersEqual": false,
+        "configEqual": true,
+        "changedConfigFields": [],
+        "defaultTagPreserved": true,
+        "baselineLayers": [
+          "sha256:87e8744ef8d6da508455c6acc8b02a0f64c95d91e833e26652d9d81f6f75d521",
+          "sha256:6c9348c00ade4fb0d7f642faab3b8c654a86c3ee182fe1e7e021ca5eb05151c9",
+          "sha256:6debdcd6b9b59276b5c8e25ab827587a90d85f077569ae04a03e1a5e4bbe108c",
+          "sha256:c4f5b7baf75966beaf12a1647923f534f265aca5bcc7669ad2bdd035b7003fcd",
+          "sha256:f8ae9efc97f6351854d1deda7f5e39ffa77242bc8392aa0a7fc67e168168c3ec",
+          "sha256:ff56b029b178b2cd49f5b02a481ff8407aa814a46183f1880b88a0dc6db2f922",
+          "sha256:f4af7be2caeb02f893384eccce8ae04a0aebb72e4fe9f9492c10eda389812acc",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:4f45e81f4295f2c898812ba33404249324515022f0e249ea439502009e431ab8",
+          "sha256:1abfc2344d40146b24417863b8fe7dc20f5b7c807a1a880dcb17f5a9cf3150ba",
+          "sha256:dd1174f7a49abfbc2814c813b7b05611c8269b995751301c50b706badfd00c04",
+          "sha256:faceda1a578d0735244ca1523c95fedb2f960b550c38565014b5d48bafe4cbe0",
+          "sha256:77907a0ab2f56dd472ce0f805d3b3659fc63542b5207a7c04b7530c8c3100cc7",
+          "sha256:5c6e6e9c33d8b8da8ae6d3bb9dd8a94629237f50e2f45103633c34d7a8afb154"
+        ],
+        "candidateLayers": [
+          "sha256:87e8744ef8d6da508455c6acc8b02a0f64c95d91e833e26652d9d81f6f75d521",
+          "sha256:6c9348c00ade4fb0d7f642faab3b8c654a86c3ee182fe1e7e021ca5eb05151c9",
+          "sha256:6debdcd6b9b59276b5c8e25ab827587a90d85f077569ae04a03e1a5e4bbe108c",
+          "sha256:c4f5b7baf75966beaf12a1647923f534f265aca5bcc7669ad2bdd035b7003fcd",
+          "sha256:f8ae9efc97f6351854d1deda7f5e39ffa77242bc8392aa0a7fc67e168168c3ec",
+          "sha256:ff56b029b178b2cd49f5b02a481ff8407aa814a46183f1880b88a0dc6db2f922",
+          "sha256:f4af7be2caeb02f893384eccce8ae04a0aebb72e4fe9f9492c10eda389812acc",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:1d8e50aa0c5b4c62cdb34d2810ee02b34c16c0267158e6431234ec817f661e6f",
+          "sha256:1abfc2344d40146b24417863b8fe7dc20f5b7c807a1a880dcb17f5a9cf3150ba",
+          "sha256:e04c07bb5d251dd87cc4d9de5ffa771499f3eb643a03b6a96e536223906bde61",
+          "sha256:2afb0a0f6f579a5035feb2fd12d209612c82dc3091af1dfe0bf2b236999dda61",
+          "sha256:fefa03cb5b06c7a3b338e125944ac6417a1c0cdcdc2e598ef9de2d97efb67b79",
+          "sha256:c2fd628d93d1e95e8e61b0d4470848b54cfe87b2b892e4970c8f713759a55171"
+        ],
+        "classification": "needs-content-comparison"
+      },
+      {
+        "baselineImage": "10.132.134.63:5000/n8n-runner-custom:latest",
+        "baselineId": "sha256:b7681852f9ab6e977e6ee7b643c6e99d09410ac172bf0b2630d54244d7455c52",
+        "candidateImage": "10.132.134.63:5000/n8n-runner-custom:replay-check-20261013",
+        "candidateId": "sha256:90a9126fb58f21b9f3f1e8e89c9e17666c363135bee6f43f671955b763915d67",
+        "baselineCreated": "2026-10-12T17:47:08.580857534+08:00",
+        "candidateCreated": "2026-10-13T14:06:52.551774447+08:00",
+        "imageIdEqual": false,
+        "layersEqual": false,
+        "configEqual": true,
+        "changedConfigFields": [],
+        "defaultTagPreserved": true,
+        "baselineLayers": [
+          "sha256:34884abbe92863fce933ed7c39c0e045631af0ed86d5cc0dfbdf9fdca426ce3c",
+          "sha256:60ec85ef133910d04c4b911093e46f0ebf1e337a5a5ac44afc3eead558ad9102",
+          "sha256:cd07d2f8dc272a0bd5b2aa247eac990f9b33958cd809854ff9e80395c8fd128a",
+          "sha256:ac1843fa896bf8b274116ea9c25f5573942f764bf453e0a19dc2aef4ddabd532",
+          "sha256:bdeb7699249f83f111d4d980d8385c5f6f0538055848acb3385f69459fef2cb6",
+          "sha256:02292a274bd8fe5003f8af64d1a121b006010f7af7836faab773073aadf0a75a",
+          "sha256:f8f82af8cdd8b7bf03cb37bd015dea28e68c9b795ca7feb62ef8e81e5f75b700",
+          "sha256:322a9157d22f285fb365e3aad458c91c22f2fa832b95a1ba2e793ea0e9cda2e6",
+          "sha256:5e21eb28fb2392802f0c4ec677a3cd3c6296ae2fb7064299b08dea6fa03c48e4",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:6e46c1caed81f11beca2afe71352e5b4d800622456e37528fc26deccec26ae20",
+          "sha256:a7bd4d03a6f3abe5261841e89b32b2bf259f1413b388184d8ed15a40ddb8ae67",
+          "sha256:21e1c416b2c4644d8c9f568574da0ab95374d03308c64e81e9736b45cdccf3d9",
+          "sha256:4884c10fe50c8c329998bc6a47b01d94a769306dc51392c03ef21cd23f51096f"
+        ],
+        "candidateLayers": [
+          "sha256:34884abbe92863fce933ed7c39c0e045631af0ed86d5cc0dfbdf9fdca426ce3c",
+          "sha256:60ec85ef133910d04c4b911093e46f0ebf1e337a5a5ac44afc3eead558ad9102",
+          "sha256:cd07d2f8dc272a0bd5b2aa247eac990f9b33958cd809854ff9e80395c8fd128a",
+          "sha256:ac1843fa896bf8b274116ea9c25f5573942f764bf453e0a19dc2aef4ddabd532",
+          "sha256:bdeb7699249f83f111d4d980d8385c5f6f0538055848acb3385f69459fef2cb6",
+          "sha256:02292a274bd8fe5003f8af64d1a121b006010f7af7836faab773073aadf0a75a",
+          "sha256:f8f82af8cdd8b7bf03cb37bd015dea28e68c9b795ca7feb62ef8e81e5f75b700",
+          "sha256:322a9157d22f285fb365e3aad458c91c22f2fa832b95a1ba2e793ea0e9cda2e6",
+          "sha256:5e21eb28fb2392802f0c4ec677a3cd3c6296ae2fb7064299b08dea6fa03c48e4",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:220ba6fa1201bcb048937ca5441456735e407c4de2ff1c9f4939ceeaa1f72eb0",
+          "sha256:4035242c66ed15067dd749bc8a8f3e9bdb9274f63ea5314cdd16f4a61622616f",
+          "sha256:60961cb42a73f69b9c0b5ee4842567e8a7eccfae80199af4284324e85dcd4ed9",
+          "sha256:f065b48e5eec8181a7ad91ca4ebdae8d489ea76db3e554fbc285268ea686caa3"
+        ],
+        "classification": "needs-content-comparison"
+      }
+    ]
+  },
+  "filesystemComparison": {
+    "ok": true,
+    "sourceCommit": "d167422aabb0374e915eda825a5b624d389a7621",
+    "version": "2.42.7",
+    "excludedDockerInjectedPaths": [
+      ".dockerenv",
+      "etc/hostname",
+      "etc/hosts",
+      "etc/resolv.conf"
+    ],
+    "images": [
+      {
+        "baselineImage": "10.132.134.63:5000/n8n-custom:latest",
+        "candidateImage": "10.132.134.63:5000/n8n-custom:replay-check-20261013",
+        "baselineId": "sha256:80e7c25cb4bcf9860418c01bec4e0a0126053554d7d0a9f956b7843fd4cadbc8",
+        "candidateId": "sha256:0655d4827bfc99edb951c1325fcf1ababf911667c8992d27a8630c432ba10afd",
+        "baselineEntries": 156929,
+        "candidateEntries": 156929,
+        "normalizedDigestBefore": "27bac2245597e081ff0fad1b8ef3a7c539cddcb21eaa53fbeeca3991570c3af1",
+        "normalizedDigestAfter": "a9414802c394c7e40c01597461726017b6e9cebbbcb545bc3519695fbc8ff8d7",
+        "fileSystemEquivalent": false,
+        "addedCount": 0,
+        "removedCount": 0,
+        "changedCount": 3,
+        "changedFieldCounts": {
+          "sha256": 3
+        },
+        "mtimeChangedCount": 146039,
+        "mtimeOnlyCount": 146036,
+        "addedPaths": [],
+        "removedPaths": [],
+        "changedEntries": [
+          {
+            "path": "usr/local/lib/node_modules/n8n/build-manifest.json",
+            "fields": [
+              "sha256"
+            ],
+            "before": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 162,
+              "sha256": "50e2f54edbdd71fd95ca5c37dd79679bedcbd49ef3974c144ee6c323bb0bf19a"
+            },
+            "after": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 162,
+              "sha256": "c1c7b5d751c95071b3149f189801f0f6ca8931efe313feb579d6e076f9c9f70b"
+            }
+          },
+          {
+            "path": "usr/local/lib/node_modules/n8n/node_modules/.modules.yaml",
+            "fields": [
+              "sha256"
+            ],
+            "before": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 127083,
+              "sha256": "133b3a808188820b9a999eb5231924352f76f34a7361f41174a208c3d75587d9"
+            },
+            "after": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 127083,
+              "sha256": "7ae3c3082c765f68de6b8a55fbb4ab7f6abff5d28f5e76b3e6e316055c182074"
+            }
+          },
+          {
+            "path": "usr/local/lib/node_modules/n8n/package.json",
+            "fields": [
+              "sha256"
+            ],
+            "before": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 11699,
+              "sha256": "1230c81cf1f4dcbe8a6fffe372a9a4cf9767f463b6899d5f460b90d002393532"
+            },
+            "after": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 11699,
+              "sha256": "839116a973f4d65610ae6546bf09f0978009eed4031eb06352d91846f403b9fc"
+            }
+          }
+        ],
+        "mtimeOnlySample": [
+          "dev",
+          "dev/console",
+          "dev/pts",
+          "dev/shm",
+          "etc",
+          "etc/mtab",
+          "home/node",
+          "home/node/.n8n",
+          "tmp",
+          "usr/local",
+          "usr/local/bin",
+          "usr/local/bin/n8n",
+          "usr/local/lib",
+          "usr/local/lib/node_modules",
+          "usr/local/lib/node_modules/n8n",
+          "usr/local/lib/node_modules/n8n/THIRD_PARTY_LICENSES.md",
+          "usr/local/lib/node_modules/n8n/bin",
+          "usr/local/lib/node_modules/n8n/bin/n8n",
+          "usr/local/lib/node_modules/n8n/bin/n8n.cmd",
+          "usr/local/lib/node_modules/n8n/dist"
+        ]
+      },
+      {
+        "baselineImage": "10.132.134.63:5000/n8n-runner-custom:latest",
+        "candidateImage": "10.132.134.63:5000/n8n-runner-custom:replay-check-20261013",
+        "baselineId": "sha256:b7681852f9ab6e977e6ee7b643c6e99d09410ac172bf0b2630d54244d7455c52",
+        "candidateId": "sha256:90a9126fb58f21b9f3f1e8e89c9e17666c363135bee6f43f671955b763915d67",
+        "baselineEntries": 46593,
+        "candidateEntries": 46593,
+        "normalizedDigestBefore": "b0b840ff53dfe4424bd3c8f162faf4573c7713d3940f394e47995df12efd9b25",
+        "normalizedDigestAfter": "a76a32a22bff2325ee390943e4c506c42f74feebd5ee70da421b93b1f943a1ee",
+        "fileSystemEquivalent": false,
+        "addedCount": 0,
+        "removedCount": 0,
+        "changedCount": 3,
+        "changedFieldCounts": {
+          "sha256": 3
+        },
+        "mtimeChangedCount": 41411,
+        "mtimeOnlyCount": 41408,
+        "addedPaths": [],
+        "removedPaths": [],
+        "changedEntries": [
+          {
+            "path": "opt/runners/task-runner-javascript/build-manifest.json",
+            "fields": [
+              "sha256"
+            ],
+            "before": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 162,
+              "sha256": "f893c6f32b9adfb51218b226f5da0e31f4a51889a7271e217be47e642320f5c4"
+            },
+            "after": {
+              "kind": "file",
+              "mode": 436,
+              "uid": 0,
+              "gid": 0,
+              "size": 162,
+              "sha256": "d9a07ffd0e206c4b8707ed217490681a8adf346993d1e9defb4010ca69c73e71"
+            }
+          },
+          {
+            "path": "opt/runners/task-runner-javascript/node_modules/.modules.yaml",
+            "fields": [
+              "sha256"
+            ],
+            "before": {
+              "kind": "file",
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "size": 510,
+              "sha256": "274489febed7d2120c23572cc70fcc89dfb93626945db98ec24a1cee4a891b8b"
+            },
+            "after": {
+              "kind": "file",
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "size": 510,
+              "sha256": "6f71757acc4f464bfd183a4c78671c3d7934f4074d15e4248509d8324ff8b841"
+            }
+          },
+          {
+            "path": "opt/runners/task-runner-javascript/node_modules/.pnpm-workspace-state-v1.json",
+            "fields": [
+              "sha256"
+            ],
+            "before": {
+              "kind": "file",
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "size": 906,
+              "sha256": "a6fdebbe9a00eee2168290cb2dea316243940b2b6834f4da3e155108dede2886"
+            },
+            "after": {
+              "kind": "file",
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "size": 906,
+              "sha256": "baa5112fc2a86052778dd015f3999d4f48f043847c5e28d1101adc3418b6b490"
+            }
+          }
+        ],
+        "mtimeOnlySample": [
+          "dev",
+          "dev/console",
+          "dev/pts",
+          "dev/shm",
+          "etc",
+          "etc/mtab",
+          "opt",
+          "opt/runners",
+          "opt/runners/task-runner-javascript",
+          "opt/runners/task-runner-javascript/dist",
+          "opt/runners/task-runner-javascript/dist/build.tsbuildinfo",
+          "opt/runners/task-runner-javascript/dist/config",
+          "opt/runners/task-runner-javascript/dist/config/base-runner-config.d.ts",
+          "opt/runners/task-runner-javascript/dist/config/base-runner-config.js",
+          "opt/runners/task-runner-javascript/dist/config/base-runner-config.js.map",
+          "opt/runners/task-runner-javascript/dist/config/js-runner-config.d.ts",
+          "opt/runners/task-runner-javascript/dist/config/js-runner-config.js",
+          "opt/runners/task-runner-javascript/dist/config/js-runner-config.js.map",
+          "opt/runners/task-runner-javascript/dist/config/main-config.d.ts",
+          "opt/runners/task-runner-javascript/dist/config/main-config.js"
+        ]
+      }
+    ]
+  },
+  "metadataDifferences": [
+    {
+      "image": "10.132.134.63:5000/n8n-custom:replay-check-20261013",
+      "files": [
+        {
+          "path": "usr/local/lib/node_modules/n8n/build-manifest.json",
+          "differences": [
+            {
+              "field": "buildDuration.packageDeploy",
+              "before": 30,
+              "after": 31
+            },
+            {
+              "field": "buildDuration.total",
+              "before": 45,
+              "after": 39
+            },
+            {
+              "field": "buildTime",
+              "before": "2026-10-12T09:45:42.943Z",
+              "after": "2026-10-13T06:05:51.911Z"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/node_modules/n8n/node_modules/.modules.yaml",
+          "differences": [
+            "--- before\n",
+            "+++ after\n",
+            "@@ -3884,5 +3884,5 @@\n",
+            "   \"packageManager\": \"pnpm@12.4.2\",",
+            "   \"pendingBuilds\": [],",
+            "-  \"prunedAt\": \"Mon, 12 Oct 2026 09:45:19 GMT\",",
+            "+  \"prunedAt\": \"Tue, 13 Oct 2026 06:05:26 GMT\",",
+            "   \"publicHoistPattern\": [],",
+            "   \"skipped\": [],"
+          ]
+        },
+        {
+          "path": "usr/local/lib/node_modules/n8n/package.json",
+          "differences": []
+        }
+      ]
+    },
+    {
+      "image": "10.132.134.63:5000/n8n-runner-custom:replay-check-20261013",
+      "files": [
+        {
+          "path": "opt/runners/task-runner-javascript/build-manifest.json",
+          "differences": [
+            {
+              "field": "buildDuration.packageDeploy",
+              "before": 30,
+              "after": 31
+            },
+            {
+              "field": "buildDuration.total",
+              "before": 45,
+              "after": 39
+            },
+            {
+              "field": "buildTime",
+              "before": "2026-10-12T09:45:42.948Z",
+              "after": "2026-10-13T06:05:51.920Z"
+            }
+          ]
+        },
+        {
+          "path": "opt/runners/task-runner-javascript/node_modules/.modules.yaml",
+          "differences": [
+            "--- before\n",
+            "+++ after\n",
+            "@@ -13,5 +13,5 @@\n",
+            "   \"packageManager\": \"pnpm@12.4.2\",",
+            "   \"pendingBuilds\": [],",
+            "-  \"prunedAt\": \"Mon, 12 Oct 2026 09:46:57 GMT\",",
+            "+  \"prunedAt\": \"Tue, 13 Oct 2026 06:06:43 GMT\",",
+            "   \"publicHoistPattern\": [],",
+            "   \"skipped\": [],"
+          ]
+        },
+        {
+          "path": "opt/runners/task-runner-javascript/node_modules/.pnpm-workspace-state-v1.json",
+          "differences": [
+            {
+              "field": "lastValidatedTimestamp",
+              "before": 1791798417109,
+              "after": 1791871603602
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "finalCheck": {
+    "packageJsonEqualAsObject": true,
+    "currentSource": "d167422aabb0374e915eda825a5b624d389a7621",
+    "originSource": "d167422aabb0374e915eda825a5b624d389a7621",
+    "trackedClean": true,
+    "defaultTags": [
+      {
+        "image": "10.132.134.63:5000/n8n-custom:latest",
+        "preserved": true
+      },
+      {
+        "image": "10.132.134.63:5000/n8n-runner-custom:latest",
+        "preserved": true
+      }
+    ],
+    "packageJsonDifference": "dependency-key-order-only"
+  },
+  "tagsPublished": false,
+  "defaultsPromoted": false,
+  "productionServicesRestartedByThisTask": false,
+  "serverEvidenceDirectory": "/data/n8n/work/rebuild-compare-20261013"
+}

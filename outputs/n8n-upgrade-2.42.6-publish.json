@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "version": "2.42.6",
+  "images": [
+    "10.132.134.63:5000/n8n-custom:latest",
+    "10.132.134.63:5000/n8n-runner-custom:latest"
+  ],
+  "platform": "linux/amd64",
+  "sourceCommit": "526bb8c741f30361cbf500929e96aabe6bacd082",
+  "sourceRef": "origin/my-server",
+  "steps": [
+    {
+      "name": "backup-0",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-promote/backup-0.log",
+      "startedAt": "2026-10-12T08:40:23.605Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:40:23.676Z"
+    },
+    {
+      "name": "promote-0",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-promote/promote-0.log",
+      "startedAt": "2026-10-12T08:40:23.676Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:40:23.735Z"
+    },
+    {
+      "name": "backup-1",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-promote/backup-1.log",
+      "startedAt": "2026-10-12T08:40:23.736Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:40:23.790Z"
+    },
+    {
+      "name": "promote-1",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-promote/promote-1.log",
+      "startedAt": "2026-10-12T08:40:23.790Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:40:23.846Z"
+    },
+    {
+      "name": "publish-n8n",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-promote/publish-n8n.log",
+      "startedAt": "2026-10-12T08:40:23.846Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:40:23.967Z"
+    },
+    {
+      "name": "publish-runners",
+      "status": "passed",
+      "log": "/data/n8n/work/n8n-upgrade-2.42.6/server-promote/publish-runners.log",
+      "startedAt": "2026-10-12T08:40:24.050Z",
+      "exitCode": 0,
+      "finishedAt": "2026-10-12T08:40:24.138Z"
+    }
+  ],
+  "sourceVerified": true,
+  "verifiedSourceCommit": "7cf85e1c82ac14753480819bf27bc2fc4936df8f",
+  "artifacts": [
+    {
+      "image": "10.132.134.63:5000/n8n-custom:latest",
+      "id": "sha256:74daf4d61991b768f05c3dda2bf7b5030a957b4b5bb719b039cbb64192a87e8c",
+      "architecture": "amd64",
+      "size": 1105233487,
+      "digests": [
+        "10.132.134.63:5000/n8n-custom@sha256:d615e1fa692906df4e355d0f6ee58d5ce2d650df123928ea2cead8e432d535ee"
+      ],
+      "previousId": "sha256:1fdc68b4835c2c52542958709c4b05718f03ce49a2e6057b6f82cc3071e937db",
+      "rollbackImage": "10.132.134.63:5000/n8n-custom:latest-rollback-20261012084023"
+    },
+    {
+      "image": "10.132.134.63:5000/n8n-runner-custom:latest",
+      "id": "sha256:b2e721c07379843557e21c193fc0bf9151a695b1704e9a240905c0552fabbd06",
+      "architecture": "amd64",
+      "size": 567629895,
+      "digests": [
+        "10.132.134.63:5000/n8n-runner-custom@sha256:0d4eea0aa793e7d3e530fca7985504f52c860d5a7afb3bd8852df723c3930ee6"
+      ],
+      "previousId": "sha256:210fdaf9d4473b7cd8f90ba488c6b72279d6b64f53b3beaf8547895be76f2897",
+      "rollbackImage": "10.132.134.63:5000/n8n-runner-custom:latest-rollback-20261012084023"
+    }
+  ]
+}
